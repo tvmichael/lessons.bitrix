@@ -1,17 +1,28 @@
-.ch-slider-container
-{
+.ch-slider-container {
 	padding: 0px -15px;
 }
-.ch-slider-wrapper
-{
-	max-height: 469px;
+
+.ch-carousel-indicators {
+	display: inline-block;
+	margin: 0px 5px;
+	width: 100px;
+	height: 10px;
+	background-color: red;
 }
-.ch-slider-img-container{
+
+.ch-slider-wrapper {
+
+}
+
+.ch-slider-img-container {
 	height: 469px;
 }
-.ch-slider-img-center{
-	width: 100%;
-	position: absolute;
-	top: -50%;
+
+.ch-slider-video-container {
+	height: 469px;
+}
+
+.ch-slider-img-center {
+
 }
 
