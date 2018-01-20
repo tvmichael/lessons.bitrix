@@ -1,9 +1,12 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Слайдер");
-?><div class="col-md-12">
+?>
+
+<div class="col-md-12">
 	<h3>YouTube &amp; Img Slider</h3>
 </div>
+
 <div class="col-md-12 ch-container">
     <div class="ch-menu">
         <?$APPLICATION->IncludeComponent(
@@ -97,4 +100,19 @@ $APPLICATION->SetTitle("Слайдер");
 		?>
 	</div>
 </div>
- <br><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+
+<div class="col-md-12">
+    <br>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+    <h4>1<br>1<br>1<br>1<br>1<br></h4>
+</div>
+
+
+<br>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+
