@@ -1,28 +1,62 @@
-.ch-slider-container {
-	padding: 0px -15px;
+/* -- CAROUSEL -- */
+.cs-carusel {
+
 }
 
-.ch-carousel-indicators {
+/* -- Carousel indicators -- */
+.cs-carousel-indicators {
 	display: inline-block;
-	margin: 0px 5px;
-	width: 100px;
-	height: 10px;
-	background-color: red;
+	width: 83px !important;
+	height: 5px !important;
+	background-color: rgb( 60, 59, 59 );
+	opacity: 0.502;
+	cursor: pointer;
 }
 
-.ch-slider-wrapper {
-
-}
-
-.ch-slider-img-container {
+/* -- Carousel inner -- */
+.cs-height {
 	height: 469px;
 }
-
-.ch-slider-video-container {
-	height: 469px;
+.cs-carousel-inner-img {
+	position: absolute;
 }
 
-.ch-slider-img-center {
 
+/* -- Control -- */
+.cs-carousel-control {
+	position: absolute;
+	top: 0px;
+	margin: auto 10%;
+	width: 80%;
+	height: 100%;
 }
-
+.cs-carousel-control a:hover {
+	text-decoration: none;
+}
+.cs-carousel-control-button {
+	position: relative;
+	background-color: rgba(0,0,0, 0.1);
+	color: rgba(255,255,255, 0.6);
+	width: 48px;
+	height: 80px;
+	text-align: center;
+}
+.cs-carousel-control-button:hover {
+	background-color: rgba(0,0,0, 0.2);
+	color: rgba(255,255,255, 1);
+}
+.cs-carousel-control-button.left {
+	float:left;
+}
+.cs-carousel-control-button.right {
+	float:right;
+}
+.cs-text {
+	font-size: 1.5em;
+}
+.cs-center {
+	top: 50%;
+	-webkit-transform: translateY(-50%);
+	-ms-transform: translateY(-50%);
+	transform: translateY(-50%);
+}
