@@ -4,8 +4,14 @@
 	padding: 0px;
 }
 .ch-menu{
-	opacity: 0.5;
+	position: relative;
+	background-color: rgb( 255, 255, 255 );
+	height: 45px;
+	opacity: 0.8;
+	z-index: 100;
 }
 .ch-slider{
-
+	position: relative;
+	top: 0px;
 }
+

@@ -11,16 +11,11 @@ $curPage = $APPLICATION->GetCurPage(true);
 	<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">
 	<link rel="shortcut icon" type="image/x-icon" href="<?=SITE_DIR?>favicon.ico" />
 	<?$APPLICATION->ShowHead();?>
-
-
     <?
 	$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH."/colors.css", true);
 	//$APPLICATION->SetAdditionalCSS("/bitrix/css/main/bootstrap.css");
 	$APPLICATION->SetAdditionalCSS("/bitrix/css/main/font-awesome.css");
-    //$APPLICATION->SetAdditionalCSS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.css");
-    $APPLICATION->SetAdditionalCSS("/lessons/slider/bootstrap.css");
-    $APPLICATION->SetAdditionalCSS("/lessons/slider/bootstrap.min.css");
-
+    $APPLICATION->SetAdditionalCSS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css");
 
 
     $APPLICATION->AddHeadScript('http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.js');
@@ -29,7 +24,6 @@ $curPage = $APPLICATION->GetCurPage(true);
     //$APPLICATION->AddHeadScript('https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js');
     //$APPLICATION->AddHeadScript('https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js');
 	?>
-
 	<title><?$APPLICATION->ShowTitle()?></title>
 </head>
 
