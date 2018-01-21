@@ -33,9 +33,7 @@ $carouselListCount = count($arResult["ITEMS"]);
 	<!-- Wrapper for slides -->
 	<div class="carousel-inner cs-height" role="listbox">
 
-		<?
-        $loadYouTubeScript = true;
-        foreach( $arResult["ITEMS"] as $i => $arItem ):
+		<? foreach( $arResult["ITEMS"] as $i => $arItem ):
 
 			if( strlen($arItem['PREVIEW_PICTURE']['SRC']) > 1):?>
 				<div class="item <? if($i == 0) echo'active'; ?>" data-type="img">
@@ -45,15 +43,6 @@ $carouselListCount = count($arResult["ITEMS"]);
 			<? elseif (strlen($arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE']) > 1 ):?>
 				<div class="item cs-inner-video <? if($i == 0) echo'active'; ?>" data-type="video">
                     <?
-                    if ($loadYouTubeScript)
-                    {?>
-                        <script src="https://www.youtube.com/iframe_api"></script>
-                        <script>
-                            console.log('--- -- onYouTubeIframeAPIReady > 0 ');
-                        </script>
-                        <?
-                        $loadYouTubeScript = false;
-                    };
                     $url = $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'];
                     preg_match('/[\\?\\&]v=([^\\?\\&]+)/', $url, $matches);
                     $videoId = $matches[1];
@@ -65,36 +54,7 @@ $carouselListCount = count($arResult["ITEMS"]);
                         'videoId' =>$videoId,
                     );
                     ?>
-                    <div id="<? echo $itemIds['video'][$i]['id'];?>">
-                    </div>
-                    <div id="xxx777">
-                    </div>
-
-                    <!-- script>
-                        console.log('--- -- onYouTubeIframeAPIReady > 1 ');
-                        var player_<? echo $itemIds['video'][$i]['id'];?>;
-                        function onYouTubeIframeAPIReady() {
-                            console.log('--- -- onYouTubeIframeAPIReady > 2 ');
-                            player_<? echo $itemIds['video'][$i]['id'];?> = new YT.Player('<? echo $itemIds['video'][$i]['id'];?>', {
-                                height: '100%',
-                                width: '100%',
-                                videoId: '<? echo $videoId;?>',
-                                events: {
-                                    'onReady': onPlayerReady
-                                }
-                            });
-                        }
-
-                        function onPlayerReady(event) {
-                            console.log('--- -- onYouTubeIframeAPIReady > 3 ');
-                            event.target.playVideo();
-                        }
-                    </script>
-
-					<!-- iframe 
-						width="100%" height="100%" src="<? echo $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'];?>"
-						frameborder="0" allowFullScreen>	
-					</iframe -->
+                    <div id="<? echo $itemIds['video'][$i]['id'];?>"></div>
 				</div>
 			<? endif; ?>
 
@@ -116,13 +76,8 @@ $carouselListCount = count($arResult["ITEMS"]);
     BX.ready(function(){
         var <?=$obName?> = new JSCarouselElement(<?=CUtil::PhpToJSObject($itemIds, false, true)?>);
     });
-
-    $(document).ready(function() {
-       // jQuery.fn.carousel.Constructor.TRANSITION_DURATION = 2000  // 2 seconds
-    });
 </script>
 <? // unset($itemIds, $jsParams); ?>
-
 
 
 
@@ -203,8 +158,6 @@ $carouselListCount = count($arResult["ITEMS"]);
 <?endif;?>
 </div>
 <?/**/?>
-
-
 
 <br>
 <?
