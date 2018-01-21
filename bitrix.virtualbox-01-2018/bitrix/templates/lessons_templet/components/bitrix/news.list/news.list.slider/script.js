@@ -1,22 +1,18 @@
 (function(window){
     if (window.JSCarouselElement)
         return;
-    console.log('--- JSCarouselElement START!:');
 
     window.JSCarouselElement = function(arParams) {
-        console.log('--- JSCarouselElement CRETE!');
         this.id = arParams.id;
         this.carouselInner = $('#'+ this.id + ' .carousel-inner')[0];
         this.videoList = arParams.video;
-
+        this.player = null;
         this.init();
-
         // console.log(this);
     };
 
     window.JSCarouselElement.prototype = {
         init: function () {
-            console.log('--- JSCarouselElement > init');
             var self = this;
 
             $(this.carouselInner).width( $(window).width() );
@@ -24,7 +20,6 @@
             this.imgResize();
 
             $(window).resize(function() {
-                console.log('--- JSCarouselElement > resize');
                 var w = $(window).width(),
                     h = $(window).height();
                 self.innerWidthHeight(w, h);
@@ -33,13 +28,15 @@
 
             this.loadVideo(this.videoList);
 
-            $('.carousel').carousel({
-                // interval: 10000,
+            $('#'+this.id).on('slide.bs.carousel', function (e) {
+                console.log(e);
+                if (e.relatedTarget.childNodes[1].id){
+                    console.log( e.relatedTarget.childNodes[1] );
+                }
+                else {
+                }
             });
-            $('.carousel').on('slide.bs.carousel', function (e) {
-                //console.log(e);
-                //self.imgResize();
-            });
+
         },
 
         innerWidthHeight: function (wW, wH) {
@@ -93,97 +90,53 @@
         },
 
         loadVideo: function (videoList) {
-            console.log('--- JSCarouselElement > loadvideo');
+            var playerYT = Array();
 
-            var i,
-                currentVideo,
-                containerVideo;
-
-            /*
-            // console.log(videoList);
-            for( i in videoList ) {
-                currentVideo = videoList[i];
-                console.log('- ' + currentVideo.name);
-
-            } /**/
-
-                    console.log('--->> onYouTubeIframeAPIReady 0');
-                    var player111;
-                    window.onYouTubeIframeAPIReady = function () {
-                        console.log('--->> onYouTubeIframeAPIReady 1');
-                        player111 = new YT.Player('xxx777', {
-                            height: '100%',
-                            width: '100%',
-                            videoId: videoList[0].videoId,
-                            events: {
-                                'onReady': onPlayerReady
-                            }
-                        });
-                    }
-                    window.onPlayerReady = function(event) {
-                        console.log('--->> onYouTubeIframeAPIReady 2');
-                        event.target.playVideo();
-                    }
-
-
-
-
-
-                /**/
-
-
-
-
-
-
-            /*
             // 2. This code loads the IFrame Player API code asynchronously.
             var tag = document.createElement('script');
-
             tag.src = "https://www.youtube.com/iframe_api";
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-            // 3. This function creates an <iframe> (and YouTube player)
-            //    after the API code downloads.
-            var player;
-            function onYouTubeIframeAPIReady() {
-                player = new YT.Player('player', {
-                    height: '360',
-                    width: '640',
-                    videoId: 'M7lc1UVf-VE',
-                    events: {
-                        'onReady': onPlayerReady,
-                        'onStateChange': onPlayerStateChange
-                    }
-                });
-            }
+            window.onYouTubeIframeAPIReady = function () {
+                for (var i in videoList) {
+                    playerYT[i] = new YT.Player(videoList[i].id, {
+                        height: '100%',
+                        width: '100%',
+                        videoId: videoList[i].videoId,
+                        events: {
+                            'onReady': onPlayerReady,
+                            'onStateChange': onPlayerStateChange
+                        },
+                        playerVars: {
+                            //'autoplay': 1,
+                            'controls': 0,
+                            'autohide': 0,
+                            'showinfo' : 0,
+                            'wmode': 'opaque',
+                            'rel': 0,
+                            //'loop': 1
+                            'fs' : 0
+                        }
+                    });
+                }
+            };
 
-            // 4. The API will call this function when the video player is ready.
-            function onPlayerReady(event) {
-                event.target.playVideo();
-            }
-
-            // 5. The API calls this function when the player's state changes.
-            //    The function indicates that when playing a video (state=1),
-            //    the player should play for six seconds and then stop.
-            var done = false;
             function onPlayerStateChange(event) {
-                if (event.data == YT.PlayerState.PLAYING && !done) {
-                    setTimeout(stopVideo, 6000);
-                    done = true;
+                if (event.data === YT.PlayerState.ENDED) {
+                    event.target.playVideo();
                 }
             }
-            function stopVideo() {
-                player.stopVideo();
-            }
-            /**/
+
+            window.onPlayerReady = function(event) {
+                event.target.mute();
+                event.target.playVideo();
+            };
+            this.player = playerYT;
         }
 
 
     };
-
-    console.log('--- JSCarouselElement > END!');
 })(window);
 
 
