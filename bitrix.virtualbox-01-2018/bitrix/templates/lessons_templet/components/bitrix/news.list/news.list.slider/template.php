@@ -15,7 +15,6 @@ $this->setFrameMode(true);
 $mainId = $this->GetEditAreaId($arResult['ID']);
 $itemIds = array(
 	'id' => $mainId.'_carusel',
-    'img' => array(),
     'video' => array(),
 );
 $obName = 'ob'.preg_replace('/[^a-zA-Z0-9_]/', 'x', $mainId);
@@ -34,35 +33,66 @@ $carouselListCount = count($arResult["ITEMS"]);
 	<!-- Wrapper for slides -->
 	<div class="carousel-inner cs-height" role="listbox">
 
-		<? foreach( $arResult["ITEMS"] as $i => $arItem ): 
+		<?
+        $loadYouTubeScript = true;
+        foreach( $arResult["ITEMS"] as $i => $arItem ):
 
 			if( strlen($arItem['PREVIEW_PICTURE']['SRC']) > 1):?>
 				<div class="item <? if($i == 0) echo'active'; ?>" data-type="img">
-                    <?
-                        $itemIds['img'][$i] = array(
-                            'id' => $mainId.'_img'.$arItem['PREVIEW_PICTURE']['ID'],
-                            'height' => $arItem['PREVIEW_PICTURE']['HEIGHT'],
-                            'width' => $arItem['PREVIEW_PICTURE']['WIDTH'],
-                            'src' => $arItem['PREVIEW_PICTURE']['SRC'],
-                        );
-                    ?>
-    			    <img id="<?echo $itemIds['img'][$i]['id'];?>" class="cs-inner-img"
-                         src="<? echo $arItem['PREVIEW_PICTURE']['SRC']; ?>" alt="<? echo $arItem['NAME']; ?>">
+    			    <img class="cs-inner-img" src="<? echo $arItem['PREVIEW_PICTURE']['SRC']; ?>" alt="<? echo $arItem['NAME']; ?>">
 				</div>
+
 			<? elseif (strlen($arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE']) > 1 ):?>
 				<div class="item cs-inner-video <? if($i == 0) echo'active'; ?>" data-type="video">
                     <?
-                    $itemIds['img'][$i] = array(
-                        'id' => $mainId.'_img'.$arItem['PREVIEW_PICTURE']['ID'],
-                        'height' => $arItem['PREVIEW_PICTURE']['HEIGHT'],
-                        'width' => $arItem['PREVIEW_PICTURE']['WIDTH'],
-                        'src' => $arItem['PREVIEW_PICTURE']['SRC'],
+                    if ($loadYouTubeScript)
+                    {?>
+                        <script src="https://www.youtube.com/iframe_api"></script>
+                        <script>
+                            console.log('--- -- onYouTubeIframeAPIReady > 0 ');
+                        </script>
+                        <?
+                        $loadYouTubeScript = false;
+                    };
+                    $url = $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'];
+                    preg_match('/[\\?\\&]v=([^\\?\\&]+)/', $url, $matches);
+                    $videoId = $matches[1];
+
+                    $itemIds['video'][$i] = array(
+                        'id' => $mainId.'_video'.$arItem['ID'],
+                        'name' => $arItem['NAME'],
+                        'src' => $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'],
+                        'videoId' =>$videoId,
                     );
                     ?>
-                    <div id="<?echo $itemIds['id'].'_video' ;?>">
+                    <div id="<? echo $itemIds['video'][$i]['id'];?>">
                     </div>
+                    <div id="xxx777">
+                    </div>
+
+                    <!-- script>
+                        console.log('--- -- onYouTubeIframeAPIReady > 1 ');
+                        var player_<? echo $itemIds['video'][$i]['id'];?>;
+                        function onYouTubeIframeAPIReady() {
+                            console.log('--- -- onYouTubeIframeAPIReady > 2 ');
+                            player_<? echo $itemIds['video'][$i]['id'];?> = new YT.Player('<? echo $itemIds['video'][$i]['id'];?>', {
+                                height: '100%',
+                                width: '100%',
+                                videoId: '<? echo $videoId;?>',
+                                events: {
+                                    'onReady': onPlayerReady
+                                }
+                            });
+                        }
+
+                        function onPlayerReady(event) {
+                            console.log('--- -- onYouTubeIframeAPIReady > 3 ');
+                            event.target.playVideo();
+                        }
+                    </script>
+
 					<!-- iframe 
-						width="640" height="390" src="<? echo $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'];?>"
+						width="100%" height="100%" src="<? echo $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'];?>"
 						frameborder="0" allowFullScreen>	
 					</iframe -->
 				</div>
