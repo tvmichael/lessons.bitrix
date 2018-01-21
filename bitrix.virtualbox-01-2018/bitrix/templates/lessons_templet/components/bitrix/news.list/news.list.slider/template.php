@@ -16,6 +16,7 @@ $mainId = $this->GetEditAreaId($arResult['ID']);
 $itemIds = array(
 	'id' => $mainId.'_carusel',
     'img' => array(),
+    'video' => array(),
 );
 $obName = 'ob'.preg_replace('/[^a-zA-Z0-9_]/', 'x', $mainId);
 $carouselListCount = count($arResult["ITEMS"]);
@@ -36,7 +37,7 @@ $carouselListCount = count($arResult["ITEMS"]);
 		<? foreach( $arResult["ITEMS"] as $i => $arItem ): 
 
 			if( strlen($arItem['PREVIEW_PICTURE']['SRC']) > 1):?>
-				<div class="item <? if($i == 0) echo'active'; ?>">
+				<div class="item <? if($i == 0) echo'active'; ?>" data-type="img">
                     <?
                         $itemIds['img'][$i] = array(
                             'id' => $mainId.'_img'.$arItem['PREVIEW_PICTURE']['ID'],
@@ -45,18 +46,25 @@ $carouselListCount = count($arResult["ITEMS"]);
                             'src' => $arItem['PREVIEW_PICTURE']['SRC'],
                         );
                     ?>
-    			    <img id="<?echo $itemIds['img'][$i]['id'];?>" class="cs-carousel-inner-img"
+    			    <img id="<?echo $itemIds['img'][$i]['id'];?>" class="cs-inner-img"
                          src="<? echo $arItem['PREVIEW_PICTURE']['SRC']; ?>" alt="<? echo $arItem['NAME']; ?>">
 				</div>
 			<? elseif (strlen($arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE']) > 1 ):?>
-				<div class="item cs-carousel-inner <? if($i == 0) echo'active'; ?>">
+				<div class="item cs-inner-video <? if($i == 0) echo'active'; ?>" data-type="video">
+                    <?
+                    $itemIds['img'][$i] = array(
+                        'id' => $mainId.'_img'.$arItem['PREVIEW_PICTURE']['ID'],
+                        'height' => $arItem['PREVIEW_PICTURE']['HEIGHT'],
+                        'width' => $arItem['PREVIEW_PICTURE']['WIDTH'],
+                        'src' => $arItem['PREVIEW_PICTURE']['SRC'],
+                    );
+                    ?>
+                    <div id="<?echo $itemIds['id'].'_video' ;?>">
+                    </div>
 					<!-- iframe 
 						width="640" height="390" src="<? echo $arItem['PROPERTIES']['SLIDER_YOUTUBE_LINK']['~VALUE'];?>"
 						frameborder="0" allowFullScreen>	
 					</iframe -->
-					
-                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/3AtDnEC4zak?list=PL4QNnZJr8sRNzSeygGocsBK9rVXhwy9W4" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-
 				</div>
 			<? endif; ?>
 
@@ -77,6 +85,10 @@ $carouselListCount = count($arResult["ITEMS"]);
 <script>
     BX.ready(function(){
         var <?=$obName?> = new JSCarouselElement(<?=CUtil::PhpToJSObject($itemIds, false, true)?>);
+    });
+
+    $(document).ready(function() {
+       // jQuery.fn.carousel.Constructor.TRANSITION_DURATION = 2000  // 2 seconds
     });
 </script>
 <? // unset($itemIds, $jsParams); ?>

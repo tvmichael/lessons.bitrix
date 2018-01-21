@@ -16,47 +16,81 @@
             var self = this;
 
             $(this.carouselInner).width( $(window).width() );
-            this.carouselInnerWidthHeight( $(window).width(), $(window).height() );
-            this.carouselInnerImg();
+            this.innerWidthHeight( $(window).width(), $(window).height() );
+            this.imgResize();
 
             $(window).resize(function() {
                 var w = $(window).width(),
                     h = $(window).height();
-                self.carouselInnerWidthHeight(w, h);
+                self.innerWidthHeight(w, h);
 
-                self.carouselInnerImg();
+                self.imgResize();
             });
+
+            $('.carousel').carousel({
+                // interval: 10000,
+            });
+
+            $('.carousel').on('slide.bs.carousel', function (e) {
+                //console.log(e);
+                //self.imgResize();
+            });
+
+            $('.carousel').on('slid.bs.carousel', function (e) {
+                //console.log(e);
+                //self.imgResize();
+            });
+
         },
 
-        carouselInnerWidthHeight: function (wW, wH) {
+        innerWidthHeight: function (wW, wH) {
             $(this.carouselInner).width(wW);
+
+            if( wW < 800 || wH < 400)
+                $(this.carouselInner).height(240);
+            else $(this.carouselInner).height(469);
         },
 
-        carouselInnerImg: function () {
+        imgResize: function () {
             var cH = $(this.carouselInner).height(),
                 cW = $(this.carouselInner).width();
 
-            var activeImg = $('.active img', this.carouselInner)[0],
-                iNaturalW = activeImg.naturalWidth,
+            var activeImg,
+                iNaturalW,
+                iNaturalH,
+                iW, iH,
+                ratio,
+                top, left;
+
+            var img = $('img', this.carouselInner),
+                n = img.length,
+                i;
+
+            for(i = 0; i < n;  i++){
+                activeImg = img[i]; // $('.active img', this.carouselInner)[0],
+                iNaturalW = activeImg.naturalWidth;
                 iNaturalH = activeImg.naturalHeight;
-                //iW = $(activeImg).width(),
-                //iH = $(activeImg).height();
 
-            var ratioH, ratioW = 0;
+                // scaled image
+                ratio = cW / iNaturalW;
+                iW = Math.round(cW);
+                iH = Math.round(iNaturalH * ratio);
 
-            ratioW = cW / iNaturalW;
-            iW = cW;
-            iH = Math.round(iNaturalH * ratioW);
+                if(cH > iH){
+                    ratio = cH / iH;
+                    iW = Math.round(iW * ratio);
+                    iH = Math.round(iH * ratio);
+                }
+                $(activeImg).css("max-width",iW);
+                $(activeImg).width(iW);
+                $(activeImg).height(iH);
 
-            if(cH > iH){
-                ratioH = cH / iH;
-                iW = Math.round(iW * ratioH);
-                iH = Math.round(iH * ratioH);
+                // center image
+                left = Math.round( (cW - iW) / 2);
+                top = Math.round( (cH - iH) / 2);
+                $(activeImg).css('left', left);
+                $(activeImg).css('top', top);
             }
-            $(activeImg).css("max-width",iW);
-            $(activeImg).width(iW);
-            $(activeImg).height(iH);
-
         }
 
 

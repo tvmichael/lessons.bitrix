@@ -17,21 +17,24 @@
 .cs-height {
 	height: 469px;
 }
-.cs-carousel-inner-img {
+.cs-inner-img {
 	position: absolute;
 }
-
+.cs-inner-video {
+	height: 100%;
+}
 
 /* -- Control -- */
 .cs-carousel-control {
 	position: absolute;
-	top: 0px;
+	top: 50%;
 	margin: auto 10%;
 	width: 80%;
-	height: 100%;
+	height: 0%;
 }
-.cs-carousel-control a:hover {
+.cs-carousel-control a:hover, a:visited {
 	text-decoration: none;
+	color: white;
 }
 .cs-carousel-control-button {
 	position: relative;
@@ -59,4 +62,10 @@
 	-webkit-transform: translateY(-50%);
 	-ms-transform: translateY(-50%);
 	transform: translateY(-50%);
+}
+
+.carousel-inner .carousel-item {
+	transition: -webkit-transform 2s ease-in-out;
+	transition: transform 2s ease-in-out;
+	transition: transform 2s ease-in-out, -webkit-transform 2s ease-in-out;
 }
