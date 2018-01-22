@@ -37,6 +37,16 @@
                 }
             });
 
+            $('#'+this.id).carousel({
+                interval: 1000
+            });
+            $('#cycle1').click(function () {
+                $('#'+this.id).carousel('cycle')
+            });
+            $('#pause1').click(function () {
+                $('#'+this.id).carousel('pause')
+            });
+
         },
 
         innerWidthHeight: function (wW, wH) {

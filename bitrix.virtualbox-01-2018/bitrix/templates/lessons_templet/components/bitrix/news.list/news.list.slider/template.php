@@ -20,6 +20,11 @@ $itemIds = array(
 $obName = 'ob'.preg_replace('/[^a-zA-Z0-9_]/', 'x', $mainId);
 $carouselListCount = count($arResult["ITEMS"]);
 ?>
+<div>
+    <button id="cycle1">cycle</button>
+    <button id="paise1">pause</button>
+</div>
+
 
 <div id="<?echo $itemIds['id'];?>" class="carousel slide cs-carusel" data-ride="carousel" data-interval="false">
 	<!-- Indicators -->

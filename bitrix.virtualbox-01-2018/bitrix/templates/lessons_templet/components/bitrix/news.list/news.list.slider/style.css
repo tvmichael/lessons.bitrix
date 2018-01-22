@@ -63,9 +63,3 @@
 	-ms-transform: translateY(-50%);
 	transform: translateY(-50%);
 }
-
-.carousel-inner .carousel-item {
-	transition: -webkit-transform 2s ease-in-out;
-	transition: transform 2s ease-in-out;
-	transition: transform 2s ease-in-out, -webkit-transform 2s ease-in-out;
-}
