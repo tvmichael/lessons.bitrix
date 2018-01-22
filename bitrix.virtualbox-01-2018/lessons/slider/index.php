@@ -1,6 +1,10 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Слайдер");
+$APPLICATION->SetAdditionalCSS("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css");
+
+$APPLICATION->AddHeadScript('http://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.js');
+$APPLICATION->AddHeadScript('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.js');
 ?>
 
 <div class="col-md-12">
@@ -103,6 +107,8 @@ $APPLICATION->SetTitle("Слайдер");
 
 <div class="col-md-12">
     <br>
+
+
     <h4>1<br>1<br>1<br>1<br>1<br></h4>
     <h4>1<br>1<br>1<br>1<br>1<br></h4>
     <h4>1<br>1<br>1<br>1<br>1<br></h4>
