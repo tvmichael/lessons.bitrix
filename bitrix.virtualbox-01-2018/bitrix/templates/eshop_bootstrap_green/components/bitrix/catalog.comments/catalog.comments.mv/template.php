@@ -10,6 +10,13 @@
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
+
+// LOG-------------------------------------------------------------
+use Bitrix\Main\Diag\Debug;
+$dataTofile = array('___template_date'=>date("H:i:s") );
+Debug::writeToFile($dataTofile, "", "/bitrix/tmp/log_mv.log");
+// ----------------------------------------------------------------
+
 $this->setFrameMode(true);
 
 $templateData = array(
@@ -25,7 +32,11 @@ $templateData = array(
     'TEMPLATE_CLASS' => 'bx_' . $arParams['TEMPLATE_THEME']
 );
 
-if (!$templateData['BLOG']['BLOG_FROM_AJAX']) {
+if (!$templateData['BLOG']['BLOG_FROM_AJAX'])
+{
+    // LOG-------------------------------------------------------------
+    Debug::writeToFile(array('___template_1'=>'BLOG_FROM_AJAX' ), "", "/bitrix/tmp/log_mv.log");
+    // ----------------------------------------------------------------
     if (!empty($arResult['ERRORS'])) {
         ShowError(implode('<br>', $arResult['ERRORS']));
         return;
@@ -139,6 +150,10 @@ if (!$templateData['BLOG']['BLOG_FROM_AJAX']) {
 
     if (!empty($arData))
     {
+        // LOG-------------------------------------------------------------
+        Debug::writeToFile(array('___template_1'=>'if (!empty($arData))' ), "", "/bitrix/tmp/log_mv.log");
+        // ----------------------------------------------------------------
+
         $arTabsParams = array(
             "DATA" => $arData,
             "ID" => $templateData['TABS_ID']
@@ -178,6 +193,10 @@ if (!$templateData['BLOG']['BLOG_FROM_AJAX']) {
                     <!-- update-03 comments.mv -->
                     <div class="bx-catalog-tab-container">
                         <?
+                        // LOG-------------------------------------------------------------
+                        $dataTofile = array('___template_content'=>$content );
+                        Debug::writeToFile($dataTofile, "", "/bitrix/tmp/log_mv.log");
+                        // ----------------------------------------------------------------
                         echo $content;
                         ?>
                     </div>
@@ -197,3 +216,10 @@ if (!$templateData['BLOG']['BLOG_FROM_AJAX']) {
         ShowError(GetMessage("IBLOCK_CSC_NO_DATA"));
     }
 }
+
+
+
+//echo '<pre>';
+//echo '...catalog.comment.mv\template.php<br>';
+//print_r($arParams);
+//echo '</pre>';

@@ -8,7 +8,7 @@ console.log('window.JCCatalogSocnetsComments');
 
 window.JCCatalogSocnetsComments = function(arParams)
 {
-    console.log('1');
+    console.log('1 > comments.script');
 
 	var i;
 
@@ -90,7 +90,7 @@ window.JCCatalogSocnetsComments = function(arParams)
 
 window.JCCatalogSocnetsComments.prototype.initParams = function(id)
 {
-    console.log('2');
+    console.log('2 > comments.script');
 	var i;
 
 	if (!!this.params.settings && typeof(this.params.settings) === 'object' && typeof(this.params.settings[id]) === 'object')
@@ -105,7 +105,7 @@ window.JCCatalogSocnetsComments.prototype.initParams = function(id)
 
 window.JCCatalogSocnetsComments.prototype.Init = function()
 {
-    console.log('3');
+    console.log('3 > comments.script');
 	if (!this.tabList || !BX.type.isArray(this.tabList) || this.tabList.length === 0)
 	{
 		this.errorCode = -1;
@@ -172,7 +172,7 @@ window.JCCatalogSocnetsComments.prototype.Init = function()
 
 window.JCCatalogSocnetsComments.prototype.loadBlog = function()
 {
-    console.log('4');
+    console.log('4 > comments.script');
 	var postData;
 
 	if (this.errorCode !== 0 || !this.serviceList.blog || this.settings.blog.ajaxUrl.length === 0)
@@ -183,9 +183,14 @@ window.JCCatalogSocnetsComments.prototype.loadBlog = function()
 	postData = this.settings.blog.ajaxParams;
 	postData.sessid = BX.bitrix_sessid();
 
-    console.log('--- JCCatalogSocnetsComments: ');
+
+    console.log('4-1 > comments.script JCCatalogSocnetsComments: ');
+    //commentsSetStartParams.catalogSocnets = this.settings.blog;
     console.log(postData);
     console.log(this);
+    //console.log('4-2 > comments.script commentsSetStartParams: ');
+    //console.log(commentsSetStartParams);
+
 	BX.ajax({
 		timeout:   30,
 		method:   'POST',
@@ -198,14 +203,14 @@ window.JCCatalogSocnetsComments.prototype.loadBlog = function()
 
 window.JCCatalogSocnetsComments.prototype.loadBlogResult = function(result)
 {
-    console.log('5');
+    console.log('5 > comments.script');
 	if (BX.type.isNotEmptyString(result))
 		BX.adjust(this.services.blog.obBlogCont, { html: result });
 };
 
 window.JCCatalogSocnetsComments.prototype.loadFB = function()
 {
-    console.log('6');
+    console.log('6 > comments.script');
 	var width;
 
 	if (this.services.facebook.obFBParentCont && this.services.facebook.obFBContWidth)
@@ -236,7 +241,7 @@ window.JCCatalogSocnetsComments.prototype.loadFB = function()
 
 window.JCCatalogSocnetsComments.prototype.getFBParentWidth = function()
 {
-    console.log('7');
+    console.log('7 > comments.script');
 	var width = 0;
 	if (!!this.services.facebook.obFBParentCont)
 	{
@@ -249,7 +254,7 @@ window.JCCatalogSocnetsComments.prototype.getFBParentWidth = function()
 
 window.JCCatalogSocnetsComments.prototype.setFBWidth = function(width)
 {
-    console.log('8');
+    console.log('8 > comments.script');
 	var obFrame = null,
 		src,
 		newSrc;
@@ -279,14 +284,14 @@ window.JCCatalogSocnetsComments.prototype.setFBWidth = function(width)
 
 window.JCCatalogSocnetsComments.prototype.onResize = function()
 {
-    console.log('9');
+    console.log('9 > comments.script');
 	if (this.serviceList.facebook)
 		this.setFBWidth(this.getFBParentWidth());
 };
 
 window.JCCatalogSocnetsComments.prototype.onClick = function()
 {
-    console.log('10');
+    console.log('10 > comments.script');
 	var target = BX.proxy_context,
 		index = -1,
 		i;
@@ -312,7 +317,7 @@ window.JCCatalogSocnetsComments.prototype.onClick = function()
 
 window.JCCatalogSocnetsComments.prototype.hideActiveTab = function()
 {
-    console.log('11');
+    console.log('11 > comments.script');
 	BX.removeClass(this.obTabList[this.currentTab].tab, 'active');
 	BX.addClass(this.obTabList[this.currentTab].cont, 'tab-off');
 	BX.addClass(this.obTabList[this.currentTab].cont, 'hidden');
@@ -320,7 +325,7 @@ window.JCCatalogSocnetsComments.prototype.hideActiveTab = function()
 
 window.JCCatalogSocnetsComments.prototype.showActiveTab = function()
 {
-    console.log('12');
+    console.log('12 > comments.script');
 	BX.onCustomEvent('onAfterBXCatTabsSetActive_'+this.tabsContId,[{activeTab: this.obTabList[this.currentTab].id}]);
 	BX.addClass(this.obTabList[this.currentTab].tab, 'active');
 	BX.removeClass(this.obTabList[this.currentTab].cont, 'tab-off');

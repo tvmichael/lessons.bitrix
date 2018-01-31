@@ -193,7 +193,7 @@ if(
 
 			$ELEMENT_ID =  $valueID['ELEMENT_ID'];
 			$arParams["IBLOCK_ID"] = $valueID['IBLOCK_ID'];
-			$RATING = $valueID['RATING'];
+			$RATING = $valueID['RATING'] +1 ;
 
 			// LOG-----------------------------------------------------------------------
 			$dataTofile = array('6_0_foreeach'=>'+', 'ELEMENT_ID'=>$ELEMENT_ID, 'arParams[IBLOCK_ID]'=>$arParams["IBLOCK_ID"],);

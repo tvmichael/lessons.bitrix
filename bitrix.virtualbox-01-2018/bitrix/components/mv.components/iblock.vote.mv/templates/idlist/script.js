@@ -220,7 +220,7 @@
 			for (i = 0; i < 10; i++) // 'инпути' для голосования для текущего вкуса
 			{
 				inputId = 'i_' + selectedOptionId + '_' + i;
-				text = text + "<span>"+(1+i)+"<br><input data-option='"+selectedOptionId+"' type='radio' value='"+(1+i)+"' name='"+newGroupName+"'></span>"
+				text = text + "<span>"+(1+i)+"<br><input data-option='"+selectedOptionId+"' type='radio' value='"+i+"' name='"+newGroupName+"'></span>"
 			}
 
 			// формируем 'див' для голосования за конкретний вкус
