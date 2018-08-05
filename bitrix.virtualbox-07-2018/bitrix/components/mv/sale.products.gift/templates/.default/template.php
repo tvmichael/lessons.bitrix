@@ -116,20 +116,20 @@ $generalParams = array(
 
 $obName = 'ob'.preg_replace('/[^a-zA-Z0-9_]/', 'x', $this->GetEditAreaId($this->randString()));
 $containerName = 'sale-products-gift-container';
+
+
+// writeToFile -----------------------------------------------------
+Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 1'),"","logfile.txt");
+
 ?>
-<pre>
-        <?
-        print_r($arResult);
-        //print_r($arResult['ITEMS']);
-        echo '<br><hr>';
-        print_r($component);
-        ?>
-</pre>
 <div class="sale-products-gift bx-<?=$arParams['TEMPLATE_THEME']?>" data-entity="<?=$containerName?>">
 	<?
 	if (!empty($arResult['ITEMS']) && !empty($arResult['ITEM_ROWS']))
 	{
 		$areaIds = array();
+
+        // writeToFile -----------------------------------------------------
+        Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 2 > if'),"","logfile.txt");
 
 		foreach ($arResult['ITEMS'] as &$item)
 		{
@@ -699,6 +699,9 @@ $containerName = 'sale-products-gift-container';
 	{
 	    echo "<!-- else:  bitrix:catalog.item -->";
 
+	    // writeToFile -----------------------------------------------------
+        Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 3 > else'),"","logfile.txt");
+
 		// load css for bigData/deferred load
 		$APPLICATION->IncludeComponent(
 			'bitrix:catalog.item',
@@ -748,3 +751,29 @@ $containerName = 'sale-products-gift-container';
 		container: '<?=$containerName?>'
 	});
 </script>
+
+
+<pre>
+    <p>../mv/sale.products.gift/.default/template.php</p>
+    <?
+    echo '>> '.$templateName.'<br><br>';
+
+    $signer = new \Bitrix\Main\Security\Sign\Signer;
+    $signedTemplate = $signer->sign($templateName, 'sale.products.gift');
+    $signedParams = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'sale.products.gift');
+
+    $p = [
+        'siteId'=>$component->getSiteId(),
+		'componentPath'=> $componentPath,
+		'deferredLoad'=> true,
+		'initiallyShowHeader'=> !empty($arResult['ITEM_ROWS']),
+		'currentProductId'=> $arResult['POTENTIAL_PRODUCT_TO_BUY']['ID'],
+		'template'=> $signedTemplate,
+		'parameters'=> $signedParams,
+		'container' => $containerName
+    ];
+    print_r($p);
+    echo '<hr>';
+    print_r($arResult['ORIGINAL_PARAMETERS']);
+    ?>
+</pre>

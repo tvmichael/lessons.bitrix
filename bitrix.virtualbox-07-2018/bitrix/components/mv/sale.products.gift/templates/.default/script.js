@@ -5,6 +5,9 @@
 		return;
 
 	window.JCSaleProductsGiftComponent = function(params) {
+		console.log(':::JCSaleProductsGiftComponent:');
+        console.log(params);
+
 		this.formPosting = false;
 		this.siteId = params.siteId || '';
 		this.template = params.template || '';
@@ -44,17 +47,19 @@
 	{
 		offerChangedEvent: function()
 		{
+            console.log(':::offerChangedEvent');
 			this.sendRequest({action: 'deferredLoad', offerId: this.currentProductId});
 		},
 
 		deferredLoad: function()
 		{
+            console.log(':::deferredLoad');
 			this.sendRequest({action: 'deferredLoad'});
 		},
 
 		sendRequest: function(data)
 		{
-            console.log('sendRequest');
+            console.log(':::sendRequest');
 
 			var defaultData = {
 				siteId: this.siteId,
@@ -63,6 +68,8 @@
 			};
 
             console.log(BX.merge(defaultData, data));
+            console.log(data);
+            console.log(this.componentPath + '/ajax.php' + (document.location.href.indexOf('clear_cache=Y') !== -1 ? '?clear_cache=Y' : '') );
 
 			BX.ajax({
 				url: this.componentPath + '/ajax.php' + (document.location.href.indexOf('clear_cache=Y') !== -1 ? '?clear_cache=Y' : ''),
@@ -72,7 +79,7 @@
 				data: BX.merge(defaultData, data),
 				onsuccess: BX.delegate(function(result){
 
-                    console.log('BX.ajax');
+                    console.log(':::BX.ajax');
                     console.log(result);
 
 					if (!result || !result.JS)
@@ -93,6 +100,8 @@
 
 		showAction: function(result, data)
 		{
+            console.log(':::showAction');
+
 			if (!data)
 				return;
 
@@ -106,6 +115,8 @@
 
 		processDeferredLoadAction: function(result)
 		{
+            console.log(':::processDeferredLoadAction');
+
 			if (!result)
 				return;
 
@@ -114,7 +125,7 @@
 
 		processItems: function(itemsHtml)
 		{
-			console.log('processItems');
+			console.log(':::processItems');
 
 			if (!itemsHtml)
 				return;
@@ -177,6 +188,8 @@
 
 		showHeader: function(animate)
 		{
+            console.log(':::showHeader');
+
 			var parentNode = BX.findParent(this.container, {attr: {'data-entity': 'parent-container'}}),
 				header;
 
@@ -215,6 +228,8 @@
 
 		hideHeader: function()
 		{
+            console.log(':::hideHeader');
+
 			var parentNode = BX.findParent(this.container, {attr: {'data-entity': 'parent-container'}}),
 				header;
 

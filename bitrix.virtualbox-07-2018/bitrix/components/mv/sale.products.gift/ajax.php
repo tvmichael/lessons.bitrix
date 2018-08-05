@@ -44,3 +44,4 @@ $APPLICATION->IncludeComponent(
 	unserialize(base64_decode($parameters)),
 	false
 );
+/**/
