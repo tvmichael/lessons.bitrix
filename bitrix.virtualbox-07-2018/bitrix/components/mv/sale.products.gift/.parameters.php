@@ -14,7 +14,7 @@ if (!Loader::includeModule('iblock') || !Loader::includeModule('sale'))
 	return;
 
 // writeToFile -----------------------------------------------------
-Bitrix\Main\Diag\Debug::writeToFile(array('N' => 'parameters.php'),"","logfile.txt");
+// Bitrix\Main\Diag\Debug::writeToFile(array('N' => 'parameters.php'),"","logfile.txt");
 
 
 $catalogIncluded = Loader::includeModule('catalog');

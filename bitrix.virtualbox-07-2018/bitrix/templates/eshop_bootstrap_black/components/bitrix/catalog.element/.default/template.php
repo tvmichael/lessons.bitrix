@@ -1,7 +1,6 @@
 <? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main\Localization\Loc;
-
 /**
  * @global CMain $APPLICATION
  * @var array $arParams
@@ -157,63 +156,6 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 	}
 }
 ?>
-
-
-<?
-//----------------------------------------------------------------------------------------------------------
-use Bitrix\Sale\Compatible\DiscountCompatibility;
-use Bitrix\Sale\Basket;
-use Bitrix\Sale\Discount\Gift;
-use Bitrix\Sale\Fuser;
-//  по id товара возвращает массив id подарков
-function getGiftIds($productId)
-{
-    $giftProductIds = [];
-    if (!$productId) {
-        return $giftProductIds;
-    }
-    DiscountCompatibility::stopUsageCompatible();
-    $giftManager = Gift\Manager::getInstance();
-    $potentialBuy = [
-        'ID'                     => $productId,
-        'MODULE'                 => 'catalog',
-        'PRODUCT_PROVIDER_CLASS' => 'CCatalogProductProvider',
-        'QUANTITY'               => 1,
-    ];
-
-    $basket = Basket::loadItemsForFUser(Fuser::getId(), SITE_ID);
-
-
-    $basketPseudo = $basket->copy();
-    foreach ($basketPseudo as $basketItem) {
-        $basketItem->delete();
-    }
-
-    $collections = $giftManager->getCollectionsByProduct($basketPseudo, $potentialBuy);
-
-    foreach ($collections as $collection) {
-        /** @var \Bitrix\Sale\Discount\Gift\Gift $gift */
-        foreach ($collection as $gift) {
-            $giftProductIds[] = $gift->getProductId();
-        }
-    }
-    DiscountCompatibility::revertUsageCompatible();
-
-    return  $giftProductIds;
-}
-?>
-
-    <div>
-    <pre>
-        INFO:
-        <?
-        print_r( $arResult['ID'] );
-        echo '<br>';
-        print_r( getGiftIds( $arResult['ID'] ));
-
-        ?>
-    </pre>
-    </div>
 
 <div class="bx-catalog-element bx-<?=$arParams['TEMPLATE_THEME']?>" id="<?=$itemIds['ID']?>"
 	itemscope itemtype="http://schema.org/Product">
@@ -1882,6 +1824,72 @@ if ($arParams['DISPLAY_COMPARE'])
 
 	var <?=$obName?> = new JCCatalogElement(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
 </script>
+
+
+
+<div>
+    <pre>
+        INFO:
+        <?
+
+        //print_r($arResult);
+
+        $dp = CCatalogDiscount::GetDiscount(
+            $arResult['ID'],
+            $arResult['IBLOCK_ID'],
+            array(),
+            array(),
+            "N",
+            SITE_ID,
+            false,
+            true,
+            false
+        );
+
+        print_r($dp);
+
+
+        $arDiscounts = CCatalogDiscount::GetDiscountByProduct(
+            $arResult['ID'],
+            $USER->GetUserGroupArray(),
+            "N",
+            array(),
+            SITE_ID
+        );
+        print_r($arDiscounts);
+
+
+
+        echo '<br />CCatalogDiscount::GetList<br />';
+        $dbProductDiscounts = CCatalogDiscount::GetList(
+            array("SORT" => "ASC"),
+            array(
+                "+PRODUCT_ID" => $arResult['ID'],
+                "ACTIVE" => "Y",
+//                "!>ACTIVE_FROM" => $DB->FormatDate(date("Y-m-d H:i:s"),
+//                    "YYYY-MM-DD HH:MI:SS",
+//                    CSite::GetDateFormat("FULL")),
+//                "!<ACTIVE_TO" => $DB->FormatDate(date("Y-m-d H:i:s"),
+//                    "YYYY-MM-DD HH:MI:SS",
+//                    CSite::GetDateFormat("FULL")),
+//                "COUPON" => ""
+            ),
+            false,
+            false,
+            array(
+//                "ID", "SITE_ID", "ACTIVE", "ACTIVE_FROM", "ACTIVE_TO",
+//                "RENEWAL", "NAME", "SORT", "MAX_DISCOUNT", "VALUE_TYPE",
+//                "VALUE", "CURRENCY", "PRODUCT_ID"
+            )
+        );
+        while ($arProductDiscounts = $dbProductDiscounts->Fetch())
+        {
+         print_r($arProductDiscounts);
+        }
+        ?>
+    </pre>
+</div>
+
 
 
 

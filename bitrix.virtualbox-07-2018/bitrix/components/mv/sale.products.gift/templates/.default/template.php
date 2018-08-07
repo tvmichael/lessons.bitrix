@@ -4,7 +4,7 @@ use \Bitrix\Main\Localization\Loc;
 
 
 // writeToFile -----------------------------------------------------
-Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php'),"","logfile.txt");
+// Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php'),"","logfile.txt");
 
 
 /**
@@ -119,7 +119,7 @@ $containerName = 'sale-products-gift-container';
 
 
 // writeToFile -----------------------------------------------------
-Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 1'),"","logfile.txt");
+//Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 1'),"","logfile.txt");
 
 ?>
 <div class="sale-products-gift bx-<?=$arParams['TEMPLATE_THEME']?>" data-entity="<?=$containerName?>">
@@ -129,7 +129,7 @@ Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 1'),"","logfil
 		$areaIds = array();
 
         // writeToFile -----------------------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 2 > if'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 2 > if'),"","logfile.txt");
 
 		foreach ($arResult['ITEMS'] as &$item)
 		{
@@ -700,7 +700,7 @@ Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 1'),"","logfil
 	    echo "<!-- else:  bitrix:catalog.item -->";
 
 	    // writeToFile -----------------------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 3 > else'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 3 > else'),"","logfile.txt");
 
 		// load css for bigData/deferred load
 		$APPLICATION->IncludeComponent(
@@ -756,24 +756,24 @@ Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'template.php -- 1'),"","logfil
 <pre>
     <p>../mv/sale.products.gift/.default/template.php</p>
     <?
-    echo '>> '.$templateName.'<br><br>';
-
-    $signer = new \Bitrix\Main\Security\Sign\Signer;
-    $signedTemplate = $signer->sign($templateName, 'sale.products.gift');
-    $signedParams = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'sale.products.gift');
-
-    $p = [
-        'siteId'=>$component->getSiteId(),
-		'componentPath'=> $componentPath,
-		'deferredLoad'=> true,
-		'initiallyShowHeader'=> !empty($arResult['ITEM_ROWS']),
-		'currentProductId'=> $arResult['POTENTIAL_PRODUCT_TO_BUY']['ID'],
-		'template'=> $signedTemplate,
-		'parameters'=> $signedParams,
-		'container' => $containerName
-    ];
-    print_r($p);
-    echo '<hr>';
-    print_r($arResult['ORIGINAL_PARAMETERS']);
+//    echo '>> '.$templateName.'<br><br>';
+//
+//    $signer = new \Bitrix\Main\Security\Sign\Signer;
+//    $signedTemplate = $signer->sign($templateName, 'sale.products.gift');
+//    $signedParams = $signer->sign(base64_encode(serialize($arResult['ORIGINAL_PARAMETERS'])), 'sale.products.gift');
+//
+//    $p = [
+//        'siteId'=>$component->getSiteId(),
+//		'componentPath'=> $componentPath,
+//		'deferredLoad'=> true,
+//		'initiallyShowHeader'=> !empty($arResult['ITEM_ROWS']),
+//		'currentProductId'=> $arResult['POTENTIAL_PRODUCT_TO_BUY']['ID'],
+//		'template'=> $signedTemplate,
+//		'parameters'=> $signedParams,
+//		'container' => $containerName
+//    ];
+//    print_r($p);
+//    echo '<hr>';
+//    print_r($arResult['ORIGINAL_PARAMETERS']);
     ?>
 </pre>

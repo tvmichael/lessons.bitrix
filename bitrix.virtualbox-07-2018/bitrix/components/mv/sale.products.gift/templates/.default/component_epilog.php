@@ -11,7 +11,7 @@ global $APPLICATION;
 
 
 // writeToFile -----------------------------------------------------
-Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'component_epilog.php'),"","logfile.txt");
+// Bitrix\Main\Diag\Debug::writeToFile(array('T' => 'component_epilog.php'),"","logfile.txt");
 
 
 

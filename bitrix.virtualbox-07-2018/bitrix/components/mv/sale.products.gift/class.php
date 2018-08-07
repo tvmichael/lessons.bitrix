@@ -22,7 +22,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function __construct($component = null)
 	{
 	    //--------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('________________________________' => 'class.php'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('________________________________' => 'class.php'),"","logfile.txt");
 
 		parent::__construct($component);
 		$this->setExtendedMode(true)->setMultiIblockMode(true)->setPaginationMode(false);
@@ -31,7 +31,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function onPrepareComponentParams($params)
 	{
 	    //-------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'onPrepareComponentParams', 'params'=>$params),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'onPrepareComponentParams', 'params'=>$params),"","logfile.txt");
 
 		if (empty($params['SHOW_DISCOUNT_PERCENT']))
 		{
@@ -75,14 +75,14 @@ class SaleProductsGiftComponent extends ElementList
 			$params['POTENTIAL_PRODUCT_TO_BUY']['ID'] = $params['POTENTIAL_PRODUCT_TO_BUY']['PRIMARY_OFFER_ID'];
 		}
 
-        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'onPrepareComponentParams', 'params_2'=>$params),"","logfile.txt");
+        ////Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'onPrepareComponentParams', 'params_2'=>$params),"","logfile.txt");
 		return $params;
 	}
 	
 	public function checkModules()
 	{
         // ------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'checkModules', ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'checkModules', ),"","logfile.txt");
 
 		if ($success = parent::checkModules())
 		{
@@ -122,7 +122,7 @@ class SaleProductsGiftComponent extends ElementList
         $userId = $USER instanceof CAllUser? $USER->getId() : null;
 
         // ------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'initGiftManager', 'data'=>$userId ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'initGiftManager', 'data'=>$userId ),"","logfile.txt");
 
 
 		$this->giftManager = \Bitrix\Sale\Discount\Gift\Manager::getInstance()->setUserId($userId);
@@ -135,7 +135,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function getGiftCollections()
 	{
         // ------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getGiftCollections', 'arParams'=>$this->arParams ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getGiftCollections', 'arParams'=>$this->arParams ),"","logfile.txt");
 
 
 		$collections = array();
@@ -158,7 +158,7 @@ class SaleProductsGiftComponent extends ElementList
 			$collections = $this->giftManager->getCollectionsByProduct( $basketPseudo, $potentialBuy	);
 		}
 
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getGiftCollections', 'data'=>$basketPseudo ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getGiftCollections', 'data'=>$basketPseudo ),"","logfile.txt");
 		return $collections;
 	}
 
@@ -169,7 +169,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function getProductIds()
 	{
         //------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getProductIds'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getProductIds'),"","logfile.txt");
 
 		return array();
         //return $this->getGiftCollections();
@@ -182,7 +182,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function getDeferredProductIds()
 	{
         //------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getDeferredProductIds'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getDeferredProductIds'),"","logfile.txt");
 
 		if (empty($this->arParams['POTENTIAL_PRODUCT_TO_BUY']['ID']))
 		{
@@ -208,7 +208,7 @@ class SaleProductsGiftComponent extends ElementList
 
 
 		//------------------------------------
-		//Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getDeferredProductIds', 'data'=>$productIds ),"","logfile.txt");
+		////Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'getDeferredProductIds', 'data'=>$productIds ),"","logfile.txt");
 		//array_push($_SESSION['DATA_LABEL']['GIFT'], array($this->arParams['POTENTIAL_PRODUCT_TO_BUY']['ID'] => $productIds));
         //$_SESSION['DATA_LABEL']['GIFT'][$this->arParams['POTENTIAL_PRODUCT_TO_BUY']['ID']] = $productIds;
         //$_SESSION['DATA_LABEL']['GIFT'] = $this->arParams['POTENTIAL_PRODUCT_TO_BUY']['ID'];
@@ -220,7 +220,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function processProducts()
 	{
 	    //---------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'processProducts'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'processProducts'),"","logfile.txt");
 
 		$isEnabledCalculationDiscounts = CIBlockPriceTools::isEnabledCalculationDiscounts();
 		CIBlockPriceTools::disableCalculationDiscounts();
@@ -249,7 +249,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function processOffers()
 	{
 	    //---------------------------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'processOffers'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'processOffers'),"","logfile.txt");
 
 		$isEnabledCalculationDiscounts = CIBlockPriceTools::isEnabledCalculationDiscounts();
 		CIBlockPriceTools::disableCalculationDiscounts();
@@ -286,7 +286,7 @@ class SaleProductsGiftComponent extends ElementList
 	public function setGiftDiscountToMinPrice(array &$item)
 	{
 	    //-----------------------------------
-        // Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'setGiftDiscountToMinPrice'),"","logfile.txt");
+        // //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'setGiftDiscountToMinPrice'),"","logfile.txt");
 
 		$selectedPrice =& $item['ITEM_PRICES'][$item['ITEM_PRICE_SELECTED']];
 
@@ -303,7 +303,7 @@ class SaleProductsGiftComponent extends ElementList
 
 	public function isCurrentProductGift(array $product)
 	{
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'isCurrentProductGift'),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'isCurrentProductGift'),"","logfile.txt");
 
 		global $USER;
 
@@ -332,7 +332,7 @@ class SaleProductsGiftComponent extends ElementList
                 'DISCOUNT_GROUP.GROUP_ID' => $USER->getUserGroupArray(),
             ),
         ));
-        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'isCurrentProductGift', 'data'=>$mvReturn ),"","logfile.txt");
+        ////Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'isCurrentProductGift', 'data'=>$mvReturn ),"","logfile.txt");
 
 
 		return (bool)\Bitrix\Sale\Discount\Gift\RelatedDataTable::getRow(array(
@@ -352,7 +352,7 @@ class SaleProductsGiftComponent extends ElementList
 
 	public function executeComponent()
 	{
-        Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'executeComponent','arParams'=>$this->arParams ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('class' => 'executeComponent','arParams'=>$this->arParams ),"","logfile.txt");
 
 		$this->arResult['POTENTIAL_PRODUCT_TO_BUY'] = $this->arParams['POTENTIAL_PRODUCT_TO_BUY'];
 

@@ -28,14 +28,11 @@ catch (\Bitrix\Main\Security\Sign\BadSignatureException $e)
 }
 
 
-
 //-------------------------------------------------
-Bitrix\Main\Diag\Debug::writeToFile(array(
-    'N' => 'ajax.php',
-    //'data'=>unserialize(base64_decode($parameters))
-),"","logfile.txt");
-
-
+//Bitrix\Main\Diag\Debug::writeToFile(array(
+//    'N' => 'ajax.php',
+//    //'data'=>unserialize(base64_decode($parameters))
+//),"","logfile.txt");
 
 
 $APPLICATION->IncludeComponent(
