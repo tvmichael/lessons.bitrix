@@ -145,6 +145,24 @@ $arDiscounts = CCatalogDiscount::GetDiscountByProduct(
 );
 echo "<pre>".SITE_ID;
 print_r($arDiscounts);
+?>
+
+
+
+
+
+<h3>CCatalogDiscount::GetList</h3>
+<?
+CModule::IncludeModule("catalog");
+$rsDiscount = CCatalogDiscount::GetList(
+        array("SORT" => "ASC"),
+        array("ACTIVE" => "Y", )
+);
+while ($arDiscount = $rsDiscount->Fetch()) {
+    print_r($arDiscount);
+}
+
+
 echo "</pre>";
 ?>
 
