@@ -12,6 +12,8 @@ use \Bitrix\Main\Localization\Loc;
  * @var string $templateFolder
  */
 
+include_once '\local\modules\badges\Badge.php';
+
 $this->setFrameMode(true);
 $this->addExternalCss('/bitrix/css/main/bootstrap.css');
 
@@ -1826,36 +1828,39 @@ if ($arParams['DISPLAY_COMPARE'])
 </script>
 
 
+<div>
+    <?$APPLICATION->IncludeComponent(
+	"mv:badge.check", 
+	".default", 
+	array(
+		"COMPONENT_TEMPLATE" => ".default",
+		"TEMPLATE_FOR_BADGE" => "22",
+		"TEMPLATE_FOR_ARRESULT" => $arResult,
+		"TEMPLATE_FOR_ARRAY" => array(
+		),
+		"ECO_DATA_SOURCE" => "DATA",
+		"SEF_MODE" => "N",
+		"CACHE_TYPE" => "A",
+		"CACHE_TIME" => "0",
+		"SET_TITLE" => "Y",
+		"IBLOCK_TYPE_ID" => "",
+		"BASKET_PAGE_TEMPLATE" => "/personal/basket.php",
+		"VARIABLE_ALIASES" => array(
+			"IBLOCK_ID" => "IBLOCK_ID",
+			"SECTION_ID" => "SECTION_ID",
+		)
+	),
+	false
+);?>
+</div>
 
 <div>
     <pre>
         INFO:
         <?
 
-        //print_r($arResult);
 
-        $dp = CCatalogDiscount::GetDiscount(
-            $arResult['ID'],
-            $arResult['IBLOCK_ID'],
-            array(),
-            array(),
-            "N",
-            SITE_ID,
-            false,
-            true,
-            false
-        );
-        print_r($dp);
-
-
-        $arDiscounts = CCatalogDiscount::GetDiscountByProduct(
-            $arResult['ID'],
-            $USER->GetUserGroupArray(),
-            "N",
-            array(),
-            SITE_ID
-        );
-        print_r($arDiscounts);
+        print_r($arResult['BADGE']);
 
 
 
