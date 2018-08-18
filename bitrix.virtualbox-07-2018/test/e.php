@@ -3,7 +3,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("E");
 ?>
 
-<pre>
+<pre style="position: absolute; width: 1200px">
 <?
 $discountIterator = Bitrix\Sale\Internals\DiscountTable::getList ([
     //'select' => ['ID', 'XML_ID', 'NAME', 'ACTIVE_FROM', 'ACTIVE_TO', 'CONDITIONS_LIST', 'ACTIONS_LIST'],

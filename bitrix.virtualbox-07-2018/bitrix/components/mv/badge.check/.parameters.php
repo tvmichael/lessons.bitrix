@@ -1,111 +1,115 @@
 <? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Main\IO,
+    Bitrix\Main\Application;
 
-CModule::IncludeModule("iblock");
-
-$dbIBlockType = CIBlockType::GetList(
-    array("sort" => "asc"),
-    array("ACTIVE" => "Y")
-);
-while ($arIBlockType = $dbIBlockType->Fetch())
-{
-    if ($arIBlockTypeLang = CIBlockType::GetByIDLang($arIBlockType["ID"], LANGUAGE_ID))
-        $arIblockType[$arIBlockType["ID"]] = "[".$arIBlockType["ID"]."] ".$arIBlockTypeLang["NAME"];
+$dir = new IO\Directory(Application::getDocumentRoot().$componentPath.'/templates/.default/images/');
+//$dir = new IO\Directory(Application::getDocumentRoot().$templateFolder.'/images/');
+$files = $dir->getChildren();
+$arFile = [];
+foreach ($files as $f) {
+    $arFile[$f->getName()] = $f->getName();
 }
 
+$arCatalogBlock = array('catalog.element', 'catalog.section', 'catalog.item');
 
 $arComponentParameters = array(
     "GROUPS" => array(
         "SETTINGS" => array(
-            "NAME" => "SETTINGS_PHR-100",
-            "SORT" => "1000",
-        ),
-        "PARAMS" => array(
-            "NAME" => "PARAMS_PHR-10",
-            "SORT" => "2000",
+            "NAME" => "Перелік пікторграм для показу",
+            "SORT" => "200",
         ),
     ),
     "PARAMETERS" => array(
-        "TEMPLATE_FOR_ARRESULT" => array(
+        "SHOW_BADGES" => array(
             "PARENT" => "BASE",
-            "NAME" => "Ar Result",
-            "TYPE" => "STRING",
-            "DEFAULT" => '={$arResult}',
-            "VALUES"=> '={$arResult}',
-        ),
-        "TEMPLATE_FOR_BADGE" => array(
-            "PARENT" => "BASE",
-            "NAME" => GetMessage("BADGE_ACTION_NAME"),
-            "TYPE" => "STRING",
-            "MULTIPLE" => "N",
-            "DEFAULT" => "Y",
-            "REFRESH" => "Y",
-        ),
-        "TEMPLATE_FOR_ARRAY" => array(
-            "PARENT" => "BASE",
-            "NAME" => "BADGE_ACTION_NAME_ARRAY-1",
-            "TYPE" => "LIST",
-            "MULTIPLE" => "Y",
-            "ADDITIONAL_VALUES" => 'N',
-            "DEFAULT" => "Y",
-            "REFRESH" => "Y",
-            "VALUES"=>array(1,2,3,4,5),
-            "SIZE"=> 10,
-        ),
-        "IBLOCK_TYPE_ID" => array(
+            "NAME" => GetMessage("MS_SHOW_BADGES"),
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => 'Y',
+        ),        
+
+        // 
+        "SHOW_BADGES_DELIVERY" => array(
             "PARENT" => "SETTINGS",
-            "NAME" => "INFOBLOCK_TYPE_PHR-2",
+            "NAME" => "Доставки",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => 'Y',
+        ),
+        "SHOW_BADGES_DELIVERY_IMG" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Зображення доставки",
             "TYPE" => "LIST",
-            "ADDITIONAL_VALUES" => "Y",
-            "VALUES" => $arIblockType,
-            "REFRESH" => "Y"
+            "VALUES" => $arFile,
         ),
-        "BASKET_PAGE_TEMPLATE" => array(
-            "PARENT" => "PARAMS",
-            "NAME" => "BASKET_LINK_PHR-3",
-            "TYPE" => "STRING",
-            "MULTIPLE" => "N",
-            "DEFAULT" => "/personal/basket.php",
-            "COLS" => 25
+
+        "SHOW_BADGES_CERTIFICATE" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Сертифікату",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => 'Y',
         ),
-        "ECO_DATA_SOURCE" =>array(
+        "SHOW_BADGES_CERTIFICATE_IMG" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Зображення сертифікату",
+            "TYPE" => "LIST",
+            "VALUES" => $arFile,
+        ),
+
+        "SHOW_BADGES_STOCK" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Акції",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => 'Y',
+        ),
+        "SHOW_BADGES_STOCK_IMG" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Зображення акції",
+            "TYPE" => "LIST",
+            "VALUES" => $arFile,
+        ),
+
+        "SHOW_BADGES_DISCOUNT" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Знижки",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => 'Y',
+        ),
+        "SHOW_BADGES_DISCOUNT_IMG" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Зображення знижки",
+            "TYPE" => "LIST",
+            "VALUES" => $arFile,
+        ),
+
+        "SHOW_BADGES_GIFT" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Подарка",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => 'Y',
+        ),        
+        "SHOW_BADGES_GIFT_IMG" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Зображення подарка",
+            "TYPE" => "LIST",
+            "VALUES" => $arFile,
+        ),
+
+        // DATA_SOURCE
+        "BADGE_CATALOG" =>array(
             "PARENT"=>"DATA_SOURCE",
-            "NAME" => "DATA_SOURCE_BASKET_LINK_PHR-3-3",
+            "NAME" => GetMessage("MS_BADGE_CATALOG"),
+            "TYPE" => "LIST",
+            "VALUES"=> $arCatalogBlock,
+        ),
+        "BADGE_ARRAY" =>array(
+            "PARENT"=>"DATA_SOURCE",
+            "NAME" => GetMessage("MS_BADGE_ARRAY"),
             "TYPE" => "STRING",
             "MULTIPLE" => "N",
-            "DEFAULT" => "DATA",
-            "COLS" => 25
-        ),
-
-        "SET_TITLE" => array(),
-        "CACHE_TIME" => array(),
-
-        "VARIABLE_ALIASES" => array(
-            "IBLOCK_ID" => array(
-                "NAME" => "CATALOG_ID_VARIABLE_PHR-4",
-            ),
-            "SECTION_ID" => array(
-                "NAME" => "SECTION_ID_VARIABLE_PHR-5",
-            ),
-        ),
-
-        "SEF_MODE" => array(
-            "list" => array(
-                "NAME" => "CATALOG_LIST_PATH_TEMPLATE_PHR-6",
-                "DEFAULT" => "index.php",
-                "VARIABLES" => array()
-            ),
-            "section1" => array(
-                "NAME" => "SECTION_LIST_PATH_TEMPLATE_PHR-7",
-                "DEFAULT" => "#IBLOCK_ID#",
-                "VARIABLES" => array("IBLOCK_ID")
-            ),
-            "section2" => array(
-                "NAME" => "SUB_SECTION_LIST_PATH_TEMPLATE_PHR-8",
-                "DEFAULT" => "#IBLOCK_ID#/#SECTION_ID#",
-                "VARIABLES" => array("IBLOCK_ID", "SECTION_ID")
-            ),
+            "DEFAULT" => '={$arResult}',
+            "VALUES"=> '',
         ),
     ),
+
 );
 ?>

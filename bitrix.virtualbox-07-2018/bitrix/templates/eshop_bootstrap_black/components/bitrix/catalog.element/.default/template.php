@@ -224,6 +224,33 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 							}
 						}
 						?>
+
+
+                        <?$APPLICATION->IncludeComponent(
+                            "mv:badge.check",
+                            ".default",
+                            array(
+                                "BADGE_ARRAY" => $arResult,
+                                "BADGE_CATALOG" => "0",
+                                "COMPOSITE_FRAME_MODE" => "A",
+                                "COMPOSITE_FRAME_TYPE" => "AUTO",
+                                "SHOW_BADGES" => "Y",
+                                "SHOW_BADGES_CERTIFICATE" => "Y",
+                                "SHOW_BADGES_CERTIFICATE_IMG" => "certificate100.png",
+                                "SHOW_BADGES_DELIVERY" => "Y",
+                                "SHOW_BADGES_DELIVERY_IMG" => "delivery.png",
+                                "SHOW_BADGES_DISCOUNT" => "Y",
+                                "SHOW_BADGES_DISCOUNT_IMG" => "discount.png",
+                                "SHOW_BADGES_GIFT" => "Y",
+                                "SHOW_BADGES_GIFT_IMG" => "gift.png",
+                                "SHOW_BADGES_STOCK" => "Y",
+                                "SHOW_BADGES_STOCK_IMG" => "stock.png"
+                            ),
+                            false
+                        );?>
+
+
+
 						<div class="product-item-detail-slider-images-container" data-entity="images-container">
 							<?
 							if (!empty($actualItem['MORE_PHOTO']))
@@ -1827,44 +1854,13 @@ if ($arParams['DISPLAY_COMPARE'])
 	var <?=$obName?> = new JCCatalogElement(<?=CUtil::PhpToJSObject($jsParams, false, true)?>);
 </script>
 
-
-<div>
-    <?$APPLICATION->IncludeComponent(
-	"mv:badge.check", 
-	".default", 
-	array(
-		"COMPONENT_TEMPLATE" => ".default",
-		"TEMPLATE_FOR_BADGE" => "22",
-		"TEMPLATE_FOR_ARRESULT" => $arResult,
-		"TEMPLATE_FOR_ARRAY" => array(
-		),
-		"ECO_DATA_SOURCE" => "DATA",
-		"SEF_MODE" => "N",
-		"CACHE_TYPE" => "A",
-		"CACHE_TIME" => "0",
-		"SET_TITLE" => "Y",
-		"IBLOCK_TYPE_ID" => "",
-		"BASKET_PAGE_TEMPLATE" => "/personal/basket.php",
-		"VARIABLE_ALIASES" => array(
-			"IBLOCK_ID" => "IBLOCK_ID",
-			"SECTION_ID" => "SECTION_ID",
-		)
-	),
-	false
-);?>
-</div>
-
 <div>
     <pre>
-        INFO:
+        INFO1:
         <?
-
-
-        print_r($arResult['BADGE']);
-
-
-
+        //print_r($arResult);
         ?>
+
     </pre>
 </div>
 
