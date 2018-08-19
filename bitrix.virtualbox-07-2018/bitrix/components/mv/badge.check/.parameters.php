@@ -11,7 +11,7 @@ foreach ($files as $f) {
     $arFile[$f->getName()] = $f->getName();
 }
 
-$arCatalogBlock = array('catalog.element', 'catalog.section', 'catalog.item');
+$arCatalogBlock = array('catalog.element', 'catalog.item');
 
 $arComponentParameters = array(
     "GROUPS" => array(
@@ -44,13 +44,13 @@ $arComponentParameters = array(
 
         "SHOW_BADGES_CERTIFICATE" => array(
             "PARENT" => "SETTINGS",
-            "NAME" => "Сертифікату",
+            "NAME" => "Сертифікат (купон)",
             "TYPE" => "CHECKBOX",
             "DEFAULT" => 'Y',
         ),
         "SHOW_BADGES_CERTIFICATE_IMG" => array(
             "PARENT" => "SETTINGS",
-            "NAME" => "Зображення сертифікату",
+            "NAME" => "Зображення сертифікату (купона)",
             "TYPE" => "LIST",
             "VALUES" => $arFile,
         ),
@@ -66,6 +66,13 @@ $arComponentParameters = array(
             "NAME" => "Зображення акції",
             "TYPE" => "LIST",
             "VALUES" => $arFile,
+        ),
+        "SHOW_BADGES_STOCK_XML_ID" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => "Зовнішній код для акції",
+            "TYPE" => "STRING",
+            "DEFAULT" => 'STOCK',
+            "VALUES" => '',
         ),
 
         "SHOW_BADGES_DISCOUNT" => array(
@@ -83,7 +90,7 @@ $arComponentParameters = array(
 
         "SHOW_BADGES_GIFT" => array(
             "PARENT" => "SETTINGS",
-            "NAME" => "Подарка",
+            "NAME" => "Подарок",
             "TYPE" => "CHECKBOX",
             "DEFAULT" => 'Y',
         ),        

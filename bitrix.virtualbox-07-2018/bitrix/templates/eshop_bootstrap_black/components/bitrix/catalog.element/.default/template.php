@@ -244,7 +244,9 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
                                 "SHOW_BADGES_GIFT" => "Y",
                                 "SHOW_BADGES_GIFT_IMG" => "gift.png",
                                 "SHOW_BADGES_STOCK" => "Y",
-                                "SHOW_BADGES_STOCK_IMG" => "stock.png"
+                                "SHOW_BADGES_STOCK_IMG" => "stock.png",
+                                "COMPONENT_TEMPLATE" => ".default",
+                                "SHOW_BADGES_STOCK_XML_ID" => "STOCK"
                             ),
                             false
                         );?>
@@ -1860,7 +1862,6 @@ if ($arParams['DISPLAY_COMPARE'])
         <?
         //print_r($arResult);
         ?>
-
     </pre>
 </div>
 
