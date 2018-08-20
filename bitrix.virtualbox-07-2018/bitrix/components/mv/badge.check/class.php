@@ -346,7 +346,7 @@ class CBadgesCheck extends CBitrixComponent
                         ]);
                 }
             }
-            elseif ($discount['ACTIONS_LIST']['DATA']['All'] == 'OR' && $operation > 0)
+            elseif ($discount['ACTIONS_LIST']['DATA']['All'] == 'OR' && $operation > 0) // виконалась одна з дій
             {
 
                 if(count($arTempCondition['ActSaleDelivery']) > 0)
