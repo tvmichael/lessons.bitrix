@@ -238,7 +238,7 @@ class CBadgesCheck extends CBitrixComponent
             }
 
             // перевіряємо (і - або) умови виконалися
-            if(count($delivery) > 0) // виконалося хоча б одна умова
+            if(count($delivery) > 0) // виконалося хоча б одна умова (внутрішній рівень)
                 if ( $arChildren['DATA']['All']=='AND' && (count($this->arRecursion)-$nCondGroup) == count($delivery) ){
                     array_push($arTempCondition, $delivery);
                 } elseif ($arChildren['DATA']['All'] == 'OR'){
@@ -247,12 +247,12 @@ class CBadgesCheck extends CBitrixComponent
             //$this->PPPP($delivery, 'delivery');
         }
 
-        $this->PPPP([count($arTempCondition),count($discount['CONDITIONS_LIST']['CHILDREN'])], 'COND:', '#006400');
-        //
-        if(count($arTempCondition) > 0) // виконалося хоча б одна загальна умова
+        //$this->PPPP([count($arTempCondition),count($discount['CONDITIONS_LIST']['CHILDREN'])], 'COND:', '#006400');
+        // перевіряємо чи всі умови для даного правила виконані (і - або) або лише одна
+        if(count($arTempCondition) > 0) // виконалося хоча б одна загальна умова (зовнішній рівень)
             if ( $discount['CONDITIONS_LIST']['DATA']['All']=='AND' && count($discount['CONDITIONS_LIST']['CHILDREN']) == count($arTempCondition) ){
                 return $arTempCondition;
-            } elseif ($arChildren['CONDITIONS_LIST']['DATA']['All'] == 'OR'){
+            } elseif ($discount['CONDITIONS_LIST']['DATA']['All'] == 'OR'){
                 return $arTempCondition;
             }
 
@@ -318,10 +318,11 @@ class CBadgesCheck extends CBitrixComponent
             }
 
             $this->PPPP([$operation, count($discount['ACTIONS_LIST']['CHILDREN'])], 'ALL');
+            // УВАГА: перевіряємо ДІЇ
             // перевіряємо чи повинні виконатися усі ДІЇ для правила чи хоча б одна
             if($discount['ACTIONS_LIST']['DATA']['All'] == 'AND' && $operation == count($discount['ACTIONS_LIST']['CHILDREN']))
             {
-                if(count($arTempCondition['ActSaleDelivery']) > 0)
+                if(count($arTempCondition['ActSaleDelivery']) > 0) // для доставки
                 {
                     array_push($this->countRuls['DELIVERY'], [
                         'CONDITIONS'=>$arTempCondition['ActSaleDelivery'],
