@@ -14,14 +14,11 @@ class CBadgesCheck extends CBitrixComponent
         'GIFT' => [],
         'CERTIFICATE' => [],
         'STOCK' => [],
-        ];
+    ];
 
-    private $arTempCondition = [
-        'ACTIONS_LIST'=> null,
-        'RECURSIVE'=> null,
-        ];
+    private $arTempCondition = [];      // тимчасовий масив з виконаними внітрішніми умовами
 
-    private $arRecursion = null;
+    private $arRecursion = null;        // масив для рекурсивної функції
 
     /**
      * Processing parameters unique to badge component.
@@ -106,8 +103,12 @@ class CBadgesCheck extends CBitrixComponent
      */
     private function searchAccomplishConditions($children)
     {
+        //$this->PPPP($children, 'searchAccomplishConditions::');
         $arConditions = []; // виконана умова
-
+        // може бути прописано по різному
+        if (isset($children['DATA']['value'])) $dataValue = $children['DATA']['value'];
+            elseif (isset($children['DATA']['Value'])) $dataValue = $children['DATA']['Value'];
+        // вибираємо конкретну умову
         switch ($children['CLASS_ID'])
         {
             case 'CondIBElement': // товар
@@ -120,21 +121,25 @@ class CBadgesCheck extends CBitrixComponent
                 }
                 break;
             case 'CondIBIBlock': // інфоблок
-                if ($children['DATA']['value'] == $this->arrayResult['IBLOCK_ID'] && $children['DATA']['logic'] == 'Equal') {
-                    array_push($arConditions, $children['DATA']['value']);
+                if ($dataValue == $this->arrayResult['IBLOCK_ID'] && $children['DATA']['logic'] == 'Equal') {
+                    array_push($arConditions, $dataValue);
                 }
                 break;
             case 'CondIBSection': // секція
-                if ($children['DATA']['value'] == $this->arrayResult['SECTION']['IBLOCK_SECTION_ID'] && $children['DATA']['logic'] == 'Equal'){
-                    array_push($arConditions, $children['DATA']['value']);
+                $s =  $this->arrayResult['IBLOCK_SECTION_ID'] || $this->arrayResult['SECTION']['IBLOCK_SECTION_ID'];
+                //$this->PPPP([$dataValue, $s ], 'section');
+                if (($dataValue == $this->arrayResult['IBLOCK_SECTION_ID'] || $dataValue == $this->arrayResult['SECTION']['IBLOCK_SECTION_ID']) && $children['DATA']['logic'] == 'Equal'){
+                    array_push($arConditions, $dataValue);
                 }
                 break;
             case 'CondIBCode': //символьний код
-                if ($children['DATA']['value'] == $this->arrayResult['CODE'] && $children['DATA']['logic'] == 'Equal') {
-                    array_push($arConditions, $children['DATA']['value']);
+                if ($dataValue == $this->arrayResult['CODE'] && $children['DATA']['logic'] == 'Equal') {
+                    array_push($arConditions, $dataValue);
                 }
                 break;
-            case 'CondBsktFldPrice': // ціна
+            case 'CondBsktFldPrice':        // ціна товару
+            case 'CondBsktAmtGroup':        // загальна вартість товарів
+
                 $dbPrice = CPrice::GetList(
                     array("SORT" => "ASC"),
                     array("PRODUCT_ID" => $this->arrayResult['ID']),
@@ -155,27 +160,26 @@ class CBadgesCheck extends CBitrixComponent
                     $arDiscounts
                 );
                 $arPrice["DISCOUNT_PRICE"] = $discountPrice;
-                //Bitrix\Main\Diag\Debug::writeToFile(array('searchAccomplishConditions_price' => $arPrice), "", "/test/log.txt");
+                //$this->PPPP([$arPrice["DISCOUNT_PRICE"], $children['DATA']['Value'] ], 'PRICE');
                 switch ($children['DATA']['logic'])
                 {
+                    case 'EqGr':
                     case 'Great':
-                        if ( $arPrice["DISCOUNT_PRICE"] > $children['DATA']['value']){
-                            array_push($arConditions, $children['DATA']['value']);
-                        }
+                        if ( $arPrice["DISCOUNT_PRICE"] > $dataValue){ array_push($arConditions, $dataValue); }
                         break;
                     case 'Equal':
-                        if ( $arPrice["DISCOUNT_PRICE"] == $children['DATA']['value']){
-                            array_push($arConditions, $children['DATA']['value']);
-                        }
+                        if ( $arPrice["DISCOUNT_PRICE"] == $dataValue){ array_push($arConditions, $dataValue); }
                         break;
+                    case 'EqLs':
                     case 'Less':
-                        if ( $arPrice["DISCOUNT_PRICE"] < $children['DATA']['value']){
-                            array_push($arConditions, $children['DATA']['value']);
-                        }
+                        if ( $arPrice["DISCOUNT_PRICE"] < $dataValue){ array_push($arConditions, $dataValue); }
+                        break;
+                    case 'Not':
+                        if ( $arPrice["DISCOUNT_PRICE"] != $dataValue){ array_push($arConditions, $dataValue); }
                         break;
                 }
                 break;
-            default:
+            default: // властивості
                 $property = explode(":", $children['CLASS_ID']);
                 if( is_array($property) && count($property) == 3 )
                 {
@@ -188,129 +192,44 @@ class CBadgesCheck extends CBitrixComponent
                     }
                 }
         }
-        //Bitrix\Main\Diag\Debug::writeToFile(array('searchAccomplishConditions' => $children), "", "/test/log.txt");
+        //$this->PPPP($arConditions, 'arConditions', 'blue');
         return $arConditions;
-        /*
-        // CONDITIONS_LIST
-        if( is_array($discount['CONDITIONS_LIST']['CHILDREN']) )
-        {
-            // може бути умова ('або'-'і') виконані всі або лише одна
-            $orAnd = 0;
-            $orAndCount = 0;
-            if ($discount['CONDITIONS_LIST']['DATA']['All'] == 'AND' &&
-                $discount['CONDITIONS_LIST']['DATA']['True'] == 'True')
-                $orAnd = count($discount['CONDITIONS_LIST']['CHILDREN']);
-
-        // перебираємо масив умов
-        foreach ($discount['CONDITIONS_LIST']['CHILDREN'] as $conditions)
-        {
-            if ( is_array($conditions['CHILDREN']) )
-                foreach ( $conditions['CHILDREN'] as $children)
-                {
-                    switch ($children['CLASS_ID'])
-                    {
-                    case 'CondIBElement': // товар
-                        $i = 0;
-                        foreach ($children['DATA']['value'] as $value) {
-                            if ($value == $this->arrayResult['ID'] && $children['DATA']['logic'] == 'Equal'){
-                                array_push($this->countRuls['DELIVERY'], $value);
-                                $i++;
-                            }
-                        }
-                        if ($i > 0 ) $orAndCount ++;
-                        break;
-                    case 'CondIBIBlock': // інфоблок
-                        if ($children['DATA']['value'] == $this->arrayResult['IBLOCK_ID'] && $children['DATA']['logic'] == 'Equal') {
-                            array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                            $orAndCount ++;
-                        }
-                        break;
-                    case 'CondIBSection': // секція
-                        if ($children['DATA']['value'] == $this->arrayResult['SECTION']['IBLOCK_SECTION_ID'] && $children['DATA']['logic'] == 'Equal'){
-                            array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                            $orAndCount ++;
-                        }
-                        break;
-                    case 'CondIBCode': //символьний код
-                        if ($children['DATA']['value'] == $this->arrayResult['CODE'] && $children['DATA']['logic'] == 'Equal') {
-                            array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                            $orAndCount ++;
-                        }
-                        break;
-                    case 'CondBsktFldPrice': // ціна
-                        switch ($children['DATA']['logic'])
-                        {
-                            case 'Great':
-                                if ( $this->arrayResult['MIN_PRICE']['DISCOUNT_VALUE'] > $children['DATA']['value']){
-                                    array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                                    $orAndCount ++;
-                                }
-                                break;
-                            case 'Equal':
-                                if ( $this->arrayResult['MIN_PRICE']['DISCOUNT_VALUE'] == $children['DATA']['value']){
-                                    array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                                    $orAndCount ++;
-                                }
-                                break;
-                            case 'Less':
-                                if ( $this->arrayResult['MIN_PRICE']['DISCOUNT_VALUE'] < $children['DATA']['value']){
-                                    array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                                    $orAndCount ++;
-                                }
-                                break;
-                         }
-                        break;
-                    default:
-                        $property = explode(":", $children['CLASS_ID']);
-                        if( is_array($property) && count($property) == 3 )
-                        {
-                            $db_props = CIBlockElement::GetProperty($property[1], $this->arrayResult['ID'], array("sort" => "asc"), Array('ID'=>$property[2]));
-                            while ($props = $db_props->GetNext())
-                            {
-                                if($props['VALUE'] == $children['DATA']['value'] && $children['DATA']['logic'] == 'Equal') {
-                                    //$this->countRuls['DELIVERY'] = $value;
-                                    array_push($this->countRuls['DELIVERY'], $children['DATA']['value']);
-                                    $orAndCount ++;
-                                }
-                            }
-                        }
-                    }
-                }
-        }
-
-        if( $orAnd!=0 && $orAnd == $orAndCount)
-            array_push($this->countRuls['DELIVERY'], $orAnd.'-Equal-'.$orAndCount );
-        elseif($orAnd!=0) $this->countRuls['DELIVERY']=[];
-        // array_push($this->countRuls['INFO'], array('Type'=>$actionsList['DATA']['Type']) );
-        */
     }
 
     /**
-     * Знаходимо всі умови для поточного правила. Змінена вартість доставки - ActSaleDelivery
+     * Знаходимо всі умови для ПОТОЧНОГО правила. Змінена вартість доставки - ActSaleDelivery
      *
      * @param array $discount     - масив з даними для поточного правила
      * @return array $arCondition   масив з виконаними умовами
      */ 
     public function getActSaleDelivery($discount)
     {
-        // очищаємо тимчасовий масив умов для правила
-        $this->arTempCondition = [
-            'ACTIONS_LIST'=> [],
-            'RECURSIVE'=> [],
-        ];
+        $arTempCondition = [];  // очищаємо тимчасовий масив умов для виконаних умов
+        $parentCondition = 0;   //
+
         // перебираємо всі ГОЛОВНІ умови для поточного правила і створюємо масив для вибірки
         foreach ($discount['CONDITIONS_LIST']['CHILDREN'] as $key => $arChildren )
         {
+            //$this->PPPP($arChildren, 'arChildren==='.$discount['ID']);
             $this->arRecursion = [];
+
+            // 1 якщо існує зовнішня умова
+            if (isset($arChildren['DATA']['Value']) && isset($arChildren['DATA']['logic']))
+            {
+                $i = [ 'CHILDREN'=> ['0' => ['CLASS_ID' => $arChildren['CLASS_ID'],'DATA' => $arChildren['DATA'],'CHILDREN' =>[]]] ];
+                //$this->PPPP($i, '$i');
+                $this->recursiveSearchChildren($i);
+            }
+            // 2 для загального масиву
             $this->recursiveSearchChildren($arChildren);
 
             $nCondGroup = 0;    // кількість груп треба забрати від загальної кількості
             $delivery = [];     //
+            //$this->PPPP($this->arRecursion, '$this->arRecursion');
             foreach ($this->arRecursion as $rec)
             {
-                if ($rec['CLASS_ID'] !== 'CondGroup') {
+                if ($rec['CLASS_ID'] !== 'CondGroup') { // підраховуємо кількість пунктів без умов
                     $ar = $this->searchAccomplishConditions($rec);
-                    //Bitrix\Main\Diag\Debug::writeToFile(array('ar' => $ar,), "", "/test/log.txt");
                     if (count($ar) > 0)
                         array_push($delivery, $ar);
                 } else {
@@ -318,34 +237,47 @@ class CBadgesCheck extends CBitrixComponent
                 }
             }
 
-            //Bitrix\Main\Diag\Debug::writeToFile(array(
-            //    'data' => $arChildren['DATA']['All'],
-            //    'nCondGroup'=>$nCondGroup,
-            //    'rec'=>count($this->arRecursion),
-            //    'del'=>count($delivery),
-            //    ), "", "/test/log.txt");
-
-            // перевіряємо умову
-            if ( $arChildren['DATA']['All']=='AND' && (count($this->arRecursion)-$nCondGroup) == count($delivery) ){
-                array_push($this->arTempCondition['RECURSIVE'], $delivery);
-            } elseif ($arChildren['DATA']['All'] == 'OR' && count($delivery) > 0 ){
-                array_push($this->arTempCondition['RECURSIVE'], $delivery);
-            }
+            // перевіряємо (і - або) умови виконалися
+            if(count($delivery) > 0) // виконалося хоча б одна умова
+                if ( $arChildren['DATA']['All']=='AND' && (count($this->arRecursion)-$nCondGroup) == count($delivery) ){
+                    array_push($arTempCondition, $delivery);
+                } elseif ($arChildren['DATA']['All'] == 'OR'){
+                    array_push($arTempCondition, $delivery);
+                }
+            //$this->PPPP($delivery, 'delivery');
         }
 
+        $this->PPPP([count($arTempCondition),count($discount['CONDITIONS_LIST']['CHILDREN'])], 'COND:', '#006400');
+        //
+        if(count($arTempCondition) > 0) // виконалося хоча б одна загальна умова
+            if ( $discount['CONDITIONS_LIST']['DATA']['All']=='AND' && count($discount['CONDITIONS_LIST']['CHILDREN']) == count($arTempCondition) ){
+                return $arTempCondition;
+            } elseif ($arChildren['CONDITIONS_LIST']['DATA']['All'] == 'OR'){
+                return $arTempCondition;
+            }
 
+        //$this->PPPP($arTempCondition, 'arTempCondition', '#006400');
+        return [];
     }
 
     // надано подарок для товару
     public function getGiftCondGroup()
     {
-        return [];
+        // очищаємо тимчасовий масив умов для виконаних умов
+        $arTempCondition = [];
+
+
+        return $arTempCondition;
     }
 
     // змінена ціна товару
     public function getActSaleBsktGrp()
     {
-        return [];
+        // очищаємо тимчасовий масив умов для виконаних умов
+        $arTempCondition = [];
+
+
+        return $arTempCondition;
     }
 
     /**
@@ -356,21 +288,70 @@ class CBadgesCheck extends CBitrixComponent
         // проходимо всі активні правила
         while ($discount = $this->obDiscountIterator->fetch()) 
         { 
+            $operation = 0;
+            $arTempCondition = [];
             // перебираємо всі дії для ПОТОЧНОГО ПРАВИЛА і виконуємо відповідні функції
             foreach ($discount['ACTIONS_LIST']['CHILDREN'] as $actionsList) 
             {
-                if ( $actionsList['CLASS_ID'] == 'ActSaleDelivery' ) 
-                    $this->getActSaleDelivery($discount);
+                if ( $actionsList['CLASS_ID'] == 'ActSaleDelivery' )
+                {
+                    $arTempCondition['ActSaleDelivery'] = [];
+                    $ar = $this->getActSaleDelivery($discount);
+                    //$this->PPPP($ar, '$ar-DELIVERY-if >>>', 'red');
+                    if( count($ar) > 0 ) {
+                        //$this->PPPP($ar, '$ar-DELIVERY');
+                        array_push($arTempCondition['ActSaleDelivery'], $ar);
+                        $operation++; 
+                    }
+                    $this->PPPP($arTempCondition, 'ActSaleDelivery');
+                }
                 elseif ($actionsList['CLASS_ID'] == 'GiftCondGroup' ) 
+                {
                     $this->getGiftCondGroup($discount);
+                    //$operation++;
+                }
                 elseif ($actionsList['CLASS_ID'] == 'ActSaleBsktGrp' )
-                    $this->getActSaleBsktGrp($discount);
-                //---
-                array_push( $this->arTempCondition['ACTIONS_LIST'], $actionsList['CLASS_ID'] );
+                {
+                    $this->getActSaleBsktGrp($discount); 
+                    //$operation++;
+                }      
+            }
+
+            $this->PPPP([$operation, count($discount['ACTIONS_LIST']['CHILDREN'])], 'ALL');
+            // перевіряємо чи повинні виконатися усі ДІЇ для правила чи хоча б одна
+            if($discount['ACTIONS_LIST']['DATA']['All'] == 'AND' && $operation == count($discount['ACTIONS_LIST']['CHILDREN']))
+            {
+                if(count($arTempCondition['ActSaleDelivery']) > 0)
+                {
+                    array_push($this->countRuls['DELIVERY'], [
+                        'CONDITIONS'=>$arTempCondition['ActSaleDelivery'],
+                        'XML_ID'=>$discount['XML_ID'],
+                        'ACTIVE_FROM'=>$discount['ACTIVE_FROM'],
+                        'ACTIVE_TO'=>$discount['ACTIVE_TO'],
+                        'USE_COUPONS'=>$discount['USE_COUPONS'],
+                        ]);
+                    if ($discount['USE_COUPONS'] == 'Y')
+                        array_push($this->countRuls['CERTIFICATE'], [                            
+                            'XML_ID'=>$discount['XML_ID'],
+                            'ACTIVE_FROM'=>$discount['ACTIVE_FROM'],
+                            'ACTIVE_TO'=>$discount['ACTIVE_TO'],
+                            'USE_COUPONS'=>$discount['USE_COUPONS'],
+                        ]);
+                    if ($discount['XML_ID'] == $this->arrayParams['SHOW_BADGES_STOCK_XML_ID'])
+                        array_push($this->countRuls['STOCK'], [                            
+                            'XML_ID'=>$discount['XML_ID'],
+                            'ACTIVE_FROM'=>$discount['ACTIVE_FROM'],
+                            'ACTIVE_TO'=>$discount['ACTIVE_TO'],
+                        ]);
+                }
+            }
+            elseif ($discount['ACTIONS_LIST']['DATA']['All'] == 'OR' && $operation > 0)
+            {
+
+                if(count($arTempCondition['ActSaleDelivery']) > 0)
+                    array_push($this->countRuls['DELIVERY'], $arTempCondition['ActSaleDelivery']);
             }
         }
-        //---
-        $this->countRuls = $this->arTempCondition;
     }
 
     /**
@@ -407,6 +388,14 @@ class CBadgesCheck extends CBitrixComponent
         //     'result' => $this->arResult,
         // ),"","/test.one/log.txt");
         return $this->arResult;
+    }
+
+    //
+    public function PPPP($arr,$inf = '',$color='black')
+    {   
+        echo "<div style='position: relative; z-index: 999;'><h4 style='background-color: white; color:$color'>".$inf."</h4><pre>";
+        print_r($arr);
+        echo "</pre></div>";
     }
 
 }?>

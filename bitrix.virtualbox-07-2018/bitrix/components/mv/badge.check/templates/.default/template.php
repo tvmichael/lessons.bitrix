@@ -14,7 +14,7 @@
 
 <div class="bx-badge-container">
 	<div class="bx-badge-inner">
-		<?/*if($arParams['SHOW_BADGES'] == 'Y'):?>
+		<?if($arParams['SHOW_BADGES'] == 'Y'):?>
 
 			<?
 			// DELIVERY
@@ -44,7 +44,7 @@
 			<? endif; ?>
 
 			<?
-			// GIFT
+			// DISCOUNT
 			if ( count($arResult['DISCOUNT']) > 0 && $arParams['SHOW_BADGES_DISCOUNT'] = 'Y' ):
 			?>
 				<div class='bx-badge-discount'>
@@ -61,7 +61,7 @@
 				</div>
 			<? endif;?>
 
-		<?endif; /**/?>
+		<?endif;?>
 	</div>
 </div>
 

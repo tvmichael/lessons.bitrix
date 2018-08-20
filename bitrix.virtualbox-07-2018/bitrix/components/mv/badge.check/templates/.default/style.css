@@ -14,12 +14,35 @@
 	display: table-cell;
 }
 
+.bx-badge-container .bx-badge-inner img {
+    width: 100%;
+}
+
 .bx-badge-delivery{
 	position: absolute;
     top: 0px;
     left: 0px;
     width: 100px;
 }
-.bx-badge-delivery img {
-    width: 100%;
+
+.bx-badge-certificate {
+    position: absolute;
+    top: 0px;
+    left: 40%;
+    width: 100px;
+}
+
+.bx-badge-stock{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100px;
+}
+
+.bx-badge-discount {
+
+}
+
+.bx-badge-gift {
+
 }

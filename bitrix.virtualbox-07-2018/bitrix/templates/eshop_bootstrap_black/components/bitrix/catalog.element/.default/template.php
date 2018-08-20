@@ -1857,10 +1857,10 @@ if ($arParams['DISPLAY_COMPARE'])
 </script>
 
 <div>
-    <pre>
+    <pre style="position: relative;">
         INFO1:
         <?
-        //print_r($arResult);
+        print_r($arResult);
         ?>
     </pre>
 </div>
