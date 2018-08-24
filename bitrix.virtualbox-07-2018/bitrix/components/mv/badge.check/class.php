@@ -9,12 +9,14 @@ class CBadgesCheck extends CBitrixComponent
     private $obDiscountIterator = null; // масив з вихідними правилами
 
     private $countRuls = [              // масив виконаних правил для показу бейджів
-        'DELIVERY' => [],        
+        'DELIVERY' => [],
         'DISCOUNT' => [],
         'GIFT' => [],
         'CERTIFICATE' => [],
         'STOCK' => [],
     ];
+
+    private $minDateTime = null;      // найменша дата для таймена
 
     private $arTempCondition = [];      // тимчасовий масив з виконаними внітрішніми умовами
 
@@ -29,8 +31,13 @@ class CBadgesCheck extends CBitrixComponent
     public function onPrepareComponentParams($arParams)
     {
         //$params = parent::onPrepareComponentParams($arParams);
-        if ($arParams['BADGE_CATALOG'] == 0)
-            $this->arrayResult = $arParams['BADGE_ARRAY'];
+        if ($arParams['BADGE_CATALOG'] == 0){
+            $this->arrayResult['ID'] = $arParams['BADGE_ARRAY']['ID'];
+            $this->arrayResult['IBLOCK_ID'] = $arParams['BADGE_ARRAY']['IBLOCK_ID'];
+            $this->arrayResult['IBLOCK_SECTION_ID'] = $arParams['BADGE_ARRAY']['IBLOCK_SECTION_ID'] || $arParams['BADGE_ARRAY']['SECTION']['IBLOCK_SECTION_ID'];
+            $this->arrayResult['CODE'] = $arParams['BADGE_ARRAY']['CODE'];
+            //$this->arrayResult = $arParams['BADGE_ARRAY'];
+        }
 
         $arParams['BADGE_ARRAY'] = null;
         $this->arrayParams = $arParams;
@@ -47,7 +54,9 @@ class CBadgesCheck extends CBitrixComponent
     private function initBadge()
     {
         if ( is_array($this->arrayResult) )
-        {            
+        {
+            $GLOBALS['BADGE_PARAM_TIMER_ON'] = false;
+
             $this->obDiscountIterator = $this->discountIterator();
 
             switch ($this->arrayParams['BADGE_CATALOG'])
@@ -66,8 +75,8 @@ class CBadgesCheck extends CBitrixComponent
     private function discountIterator()
     {
         return Bitrix\Sale\Internals\DiscountTable::getList ([
-            'select' => ['ID', 'XML_ID', 'ACTIVE_FROM', 'ACTIVE_TO', 'CONDITIONS_LIST', 'ACTIONS_LIST', 'USE_COUPONS'],
-            'filter' => ['ACTIVE' => 'Y'], 
+            'select' => ['ID', 'XML_ID', 'ACTIVE_FROM', 'ACTIVE_TO', 'CONDITIONS_LIST', 'ACTIONS_LIST', 'USE_COUPONS', 'SHORT_DESCRIPTION_STRUCTURE'],
+            'filter' => ['ACTIVE' => 'Y'],
         ]);
     }
 
@@ -107,7 +116,7 @@ class CBadgesCheck extends CBitrixComponent
         $arConditions = []; // виконана умова
         // може бути прописано по різному
         if (isset($children['DATA']['value'])) $dataValue = $children['DATA']['value'];
-            elseif (isset($children['DATA']['Value'])) $dataValue = $children['DATA']['Value'];
+        elseif (isset($children['DATA']['Value'])) $dataValue = $children['DATA']['Value'];
         // вибираємо конкретну умову
         switch ($children['CLASS_ID'])
         {
@@ -126,9 +135,8 @@ class CBadgesCheck extends CBitrixComponent
                 }
                 break;
             case 'CondIBSection': // секція
-                $s =  $this->arrayResult['IBLOCK_SECTION_ID'] || $this->arrayResult['SECTION']['IBLOCK_SECTION_ID'];
-                //$this->PPPP([$dataValue, $s ], 'section');
-                if (($dataValue == $this->arrayResult['IBLOCK_SECTION_ID'] || $dataValue == $this->arrayResult['SECTION']['IBLOCK_SECTION_ID']) && $children['DATA']['logic'] == 'Equal'){
+                //$this->PPPP([$this->arrayResult['IBLOCK_SECTION_ID']], 'section');
+                if (($dataValue == $this->arrayResult['IBLOCK_SECTION_ID']) && $children['DATA']['logic'] == 'Equal'){
                     array_push($arConditions, $dataValue);
                 }
                 break;
@@ -181,11 +189,14 @@ class CBadgesCheck extends CBitrixComponent
                 break;
             default: // властивості
                 $property = explode(":", $children['CLASS_ID']);
+                //$this->PPPP($children, 'p>','blue');
                 if( is_array($property) && count($property) == 3 )
                 {
+                    //$this->PPPP($property, 'p>>');
                     $db_props = CIBlockElement::GetProperty($property[1], $this->arrayResult['ID'], array("sort" => "asc"), Array('ID'=>$property[2]));
                     while ($props = $db_props->GetNext())
                     {
+                        //$this->PPPP($props, 'p>>>');
                         if($props['VALUE'] == $children['DATA']['value'] && $children['DATA']['logic'] == 'Equal') {
                             array_push($arConditions, $children['DATA']['value']);
                         }
@@ -201,7 +212,7 @@ class CBadgesCheck extends CBitrixComponent
      *
      * @param array $discount     - масив з даними для поточного правила
      * @return array $arCondition   масив з виконаними умовами
-     */ 
+     */
     public function getActSaleDelivery($discount)
     {
         $arTempCondition = [];  // очищаємо тимчасовий масив умов для виконаних умов
@@ -261,23 +272,23 @@ class CBadgesCheck extends CBitrixComponent
     }
 
     // надано подарок для товару
-    public function getGiftCondGroup()
+    public function getGiftCondGroup($discount)
     {
-        // очищаємо тимчасовий масив умов для виконаних умов
-        $arTempCondition = [];
-
-
-        return $arTempCondition;
+        // виконується аналогічно до ActSaleDelivery
+        return $this->getActSaleDelivery($discount);
     }
 
     // змінена ціна товару
-    public function getActSaleBsktGrp()
+    public function getActSaleBsktGrp($discount, $actionsList)
     {
-        // очищаємо тимчасовий масив умов для виконаних умов
-        $arTempCondition = [];
-
-
-        return $arTempCondition;
+        //$this->PPPP($discount, 'getActSaleBsktGrp');
+        //$this->PPPP($actionsList, 'getActSaleBsktGrp-$actionsList');
+        if ( isset($actionsList['CHILDREN']) && is_array($actionsList['CHILDREN']) && count($actionsList['CHILDREN']) > 0 )
+        {
+            array_push($discount['CONDITIONS_LIST']['CHILDREN'], $actionsList);
+            //$this->PPPP($discount, 'NEW-> getActSaleBsktGrp');
+        }
+        return $this->getActSaleDelivery($discount);
     }
 
     /**
@@ -286,12 +297,14 @@ class CBadgesCheck extends CBitrixComponent
     public function badgeCatalogElement()
     {
         // проходимо всі активні правила
-        while ($discount = $this->obDiscountIterator->fetch()) 
-        { 
+        while ($discount = $this->obDiscountIterator->fetch())
+        {
+            //$this->PPPP($discount['ID'], 'ID');
             $operation = 0;
             $arTempCondition = [];
+
             // перебираємо всі дії для ПОТОЧНОГО ПРАВИЛА і виконуємо відповідні функції
-            foreach ($discount['ACTIONS_LIST']['CHILDREN'] as $actionsList) 
+            foreach ($discount['ACTIONS_LIST']['CHILDREN'] as $actionsList)
             {
                 if ( $actionsList['CLASS_ID'] == 'ActSaleDelivery' )
                 {
@@ -301,58 +314,133 @@ class CBadgesCheck extends CBitrixComponent
                     if( count($ar) > 0 ) {
                         //$this->PPPP($ar, '$ar-DELIVERY');
                         array_push($arTempCondition['ActSaleDelivery'], $ar);
-                        $operation++; 
+                        $operation++;
                     }
-                    $this->PPPP($arTempCondition, 'ActSaleDelivery');
+                    //$this->PPPP($arTempCondition, 'ActSaleDelivery');
                 }
-                elseif ($actionsList['CLASS_ID'] == 'GiftCondGroup' ) 
+                elseif ($actionsList['CLASS_ID'] == 'GiftCondGroup' )
                 {
-                    $this->getGiftCondGroup($discount);
-                    //$operation++;
+                    $arTempCondition['GiftCondGroup'] = [];
+                    $ar = $this->getGiftCondGroup($discount);
+                    if( count($ar) > 0 ) {
+                        //$this->PPPP($ar, '$ar-DELIVERY');
+                        array_push($arTempCondition['GiftCondGroup'], $ar);
+                        $operation++;
+                    }
+                    //$this->PPPP($arTempCondition, 'GiftCondGroup');
                 }
                 elseif ($actionsList['CLASS_ID'] == 'ActSaleBsktGrp' )
                 {
-                    $this->getActSaleBsktGrp($discount); 
-                    //$operation++;
-                }      
+                    $arTempCondition['ActSaleBsktGrp'] = [];
+                    $ar = $this->getActSaleBsktGrp($discount, $actionsList);
+                    if( count($ar) > 0 ) {
+                        //$this->PPPP($ar, '$ar-DELIVERY');
+                        array_push($arTempCondition['ActSaleBsktGrp'], $ar);
+                        $operation++;
+                    }
+                }
             }
 
-            $this->PPPP([$operation, count($discount['ACTIONS_LIST']['CHILDREN'])], 'ALL');
+            //$showStockOrCupon = false; // якщо, хочаб в одній умові з виконаних є акція або купон то виводимо
+            $discountData = [
+                'XML_ID' => $discount['XML_ID'],
+                'ACTIVE_FROM' => $discount['ACTIVE_FROM'],
+                'ACTIVE_TO' => $discount['ACTIVE_TO'],
+                'USE_COUPONS' => $discount['USE_COUPONS'],
+                'SHORT_DESCRIPTION_STRUCTURE' => $discount['SHORT_DESCRIPTION_STRUCTURE'],
+            ];
+
+            //$this->PPPP([$operation, count($discount['ACTIONS_LIST']['CHILDREN'])], 'ALL');
             // УВАГА: перевіряємо ДІЇ
             // перевіряємо чи повинні виконатися усі ДІЇ для правила чи хоча б одна
             if($discount['ACTIONS_LIST']['DATA']['All'] == 'AND' && $operation == count($discount['ACTIONS_LIST']['CHILDREN']))
             {
-                if(count($arTempCondition['ActSaleDelivery']) > 0) // для доставки
+                $this->arTempConditionPush($arTempCondition, $discountData);
+            }
+            elseif ($discount['ACTIONS_LIST']['DATA']['All'] == 'OR' && $operation > 0)
+            {
+                $this->arTempConditionPush($arTempCondition, $discountData);
+            }
+
+            //$this->PPPP($discount, '>>$discount');
+        }
+    }
+
+    /**
+     *   заповнюємо масив arResult
+     */
+    public function arTempConditionPush($arTempCondition, $discountData)
+    {
+        $showStockOrCupon = false; // якщо, хочаб в одній умові з виконаних є акція або купон то виводимо
+
+        if(count($arTempCondition['ActSaleDelivery']) > 0) // для доставки
+        {
+            array_push($this->countRuls['DELIVERY'], [
+                'CONDITIONS'=>$arTempCondition['ActSaleDelivery'],
+                'TIMER'=> $this->searchShortTimePeriod($discountData, 'Delivery'),
+            ]);
+            $showStockOrCupon = true;
+        }
+        elseif(count($arTempCondition['GiftCondGroup']) > 0) // для подарунка
+        {
+            array_push($this->countRuls['GIFT'], [
+                'CONDITIONS'=>$arTempCondition['GiftCondGroup'],
+                'TIMER'=> $this->searchShortTimePeriod($discountData, 'Gift'),
+            ]);
+            $showStockOrCupon = true;
+        }
+        elseif (count($arTempCondition['ActSaleBsktGrp']) > 0) { // для знижки
+            array_push($this->countRuls['DISCOUNT'], [
+                'CONDITIONS'=>$arTempCondition['ActSaleBsktGrp'],
+                'TIMER'=> $this->searchShortTimePeriod($discountData, 'Discount'),
+            ]);
+            $showStockOrCupon = true;
+        }
+
+        // показувати КУПОН або АКЦІЮ
+        if($showStockOrCupon)
+        {
+            if ($discountData['USE_COUPONS'] == 'Y')
+                array_push($this->countRuls['CERTIFICATE'],  ['DATA'=>$discountData, 'TIMER'=>$this->searchShortTimePeriod($discountData, 'Certificate')] );
+            if ($discountData['XML_ID'] == $this->arrayParams['SHOW_BADGES_STOCK_XML_ID'])
+                array_push($this->countRuls['STOCK'], ['DATA'=>$discountData, 'TIMER'=>$this->searchShortTimePeriod($discountData, 'Stock')] );
+        }
+
+        //$this->searchShortTimePeriod($discountData);
+    }
+
+    /**
+     * шукаємо найкоротший період для таймере зворотнього часу
+     */
+    public function searchShortTimePeriod($discountData, $badge)
+    {
+        $timerOn = 1; // немає терміну дії
+        //$this->PPPP([$discountData, time()], '$discountData');
+        if (isset($discountData['ACTIVE_TO']) && is_object($discountData['ACTIVE_TO']) )
+        {
+
+            //$this->PPPP([ $this->minDateTime, $discountData['ACTIVE_TO']->getTimestamp() ], '>');
+            if($discountData['ACTIVE_TO']->getTimestamp() > time()) // якщо таймер актуальний
+            {
+                if ($this->minDateTime == null || $this->minDateTime >= $discountData['ACTIVE_TO']->getTimestamp())
                 {
-                    array_push($this->countRuls['DELIVERY'], [
-                        'CONDITIONS'=>$arTempCondition['ActSaleDelivery'],
-                        'XML_ID'=>$discount['XML_ID'],
-                        'ACTIVE_FROM'=>$discount['ACTIVE_FROM'],
-                        'ACTIVE_TO'=>$discount['ACTIVE_TO'],
-                        'USE_COUPONS'=>$discount['USE_COUPONS'],
-                        ]);
-                    if ($discount['USE_COUPONS'] == 'Y')
-                        array_push($this->countRuls['CERTIFICATE'], [                            
-                            'XML_ID'=>$discount['XML_ID'],
-                            'ACTIVE_FROM'=>$discount['ACTIVE_FROM'],
-                            'ACTIVE_TO'=>$discount['ACTIVE_TO'],
-                            'USE_COUPONS'=>$discount['USE_COUPONS'],
-                        ]);
-                    if ($discount['XML_ID'] == $this->arrayParams['SHOW_BADGES_STOCK_XML_ID'])
-                        array_push($this->countRuls['STOCK'], [                            
-                            'XML_ID'=>$discount['XML_ID'],
-                            'ACTIVE_FROM'=>$discount['ACTIVE_FROM'],
-                            'ACTIVE_TO'=>$discount['ACTIVE_TO'],
-                        ]);
+                    $this->minDateTime = $discountData['ACTIVE_TO']->getTimestamp();
+                    $GLOBALS['BADGE_PARAM_TIMER'] = [
+                        'badge' => $badge,
+                        'format' => $discountData['ACTIVE_TO']->format("Y-m-d H:i:s"),
+                    ];
+                    $GLOBALS['BADGE_PARAM_TIMER_ON'] = true;
+                    //$timerOn = $discountData['ACTIVE_TO']->format("Y-m-d H:i:s");
+                    $timerOn = $discountData['ACTIVE_TO']->getTimestamp();
                 }
             }
-            elseif ($discount['ACTIONS_LIST']['DATA']['All'] == 'OR' && $operation > 0) // виконалась одна з дій
-            {
+            else $timerOn = 0; // таймер закінчився
 
-                if(count($arTempCondition['ActSaleDelivery']) > 0)
-                    array_push($this->countRuls['DELIVERY'], $arTempCondition['ActSaleDelivery']);
-            }
+
+            //$this->PPPP([ $discountData['ACTIVE_TO']->toString(), $discountData['ACTIVE_TO']->getTimestamp() ], '$discountData');
         }
+
+        return $timerOn;
     }
 
     /**
@@ -381,6 +469,7 @@ class CBadgesCheck extends CBitrixComponent
         {
             $this->initBadge();
             $this->arResult = $this->countRuls;
+            $this->arResult['TIMER'] = $this->minDateTime;
             $this->includeComponentTemplate();
         }
         $this->unsetArray();
@@ -393,8 +482,8 @@ class CBadgesCheck extends CBitrixComponent
 
     //
     public function PPPP($arr,$inf = '',$color='black')
-    {   
-        echo "<div style='position: relative; z-index: 999;'><h4 style='background-color: white; color:$color'>".$inf."</h4><pre>";
+    {
+        echo "<div style='position: relative; min-width:600px; z-index: 999;'><h4 style='background-color: white; color:$color'>".$inf."</h4><pre>";
         print_r($arr);
         echo "</pre></div>";
     }
