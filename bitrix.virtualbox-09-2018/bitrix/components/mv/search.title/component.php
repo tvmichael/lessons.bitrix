@@ -2,7 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 //-----------------------
-Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => 1, 'PARAMS'=>$arParams ),"","logfile.txt");
+//Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => 1, 'PARAMS'=>$arParams ),"","logfile.txt");
 
 CModule::IncludeModule("search");
 $isSearchInstalled = true;//CModule::IncludeModule("search");
@@ -23,7 +23,7 @@ if(
 )
 {
     //-----------------------
-    Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => '1-1', 'fields'=>$arResult ),"","logfile.txt");
+    //Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => '1-1', 'fields'=>$arResult ),"","logfile.txt");
 
 	CUtil::decodeURIComponent($query);
 	if (!$isSearchInstalled)
@@ -117,7 +117,7 @@ if(
 				while($ar = $obTitle->Fetch())
 				{
                     //-----------------------
-                    Bitrix\Main\Diag\Debug::writeToFile(array('S-F' => '1-F1', 'A'=>$ar ),"","logfile.txt");
+                    //Bitrix\Main\Diag\Debug::writeToFile(array('S-F' => '1-F1', 'A'=>$ar ),"","logfile.txt");
 
 					$j++;
 					if($j > $arParams["TOP_COUNT"])
@@ -178,7 +178,7 @@ if(
 		}
 		*/
         //-----------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => '1-NUM_CATEGORIES-'.$i, 'fields'=>$arResult ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => '1-NUM_CATEGORIES-'.$i, 'fields'=>$arResult ),"","logfile.txt");
 	}
 
 	if($arParams["SHOW_OTHERS"] === "Y" && $isSearchInstalled)
@@ -275,14 +275,14 @@ if(
 		*/
 
         //-----------------------
-        Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => '1-CATEGORIES', 'fields'=>$arResult ),"","logfile.txt");
+        //Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => '1-CATEGORIES', 'fields'=>$arResult ),"","logfile.txt");
 	}
 }
 
 $arResult["FORM_ACTION"] = htmlspecialcharsbx(str_replace("#SITE_DIR#", SITE_DIR, $arParams["PAGE"]));
 
 //-----------------------
-Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => 2, 'fields'=>$arResult ),"","logfile.txt");
+//Bitrix\Main\Diag\Debug::writeToFile(array('STEP' => 2, 'fields'=>$arResult ),"","logfile.txt");
 
 if (
 	$_REQUEST["ajax_call"] === "y"
