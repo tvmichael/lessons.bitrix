@@ -1,3 +1,18 @@
+/*
+"отрисовка" в новом шаблоне происходит через js, кастомизировать следует файл order_ajax.js.
+У каждого блока существует два состояния - активное и скрытое.
+
+Активная секция должна всегда находиться в DOM на странице, т.к. в ней находятся нужные нам input'ы для рассчета заказа.
+Неактивный блок формируется на основе активного, и его нахождение на странице не обязательно.
+
+Основной метод - это editOrder, который вызывает редактирование каждого блока (секции - editSection).
+editSection - определяет текущую активность блока и вызывает конкретный метод для конкретного блока, напр. для блока оплат - editPaySystemBlock.
+
+Если блок активен - в видимой части отрисовывается выбор платежных систем (editActivePaySystemBlock - на отрисовку пс можно повлиять здесь), если блок неактивен - editFadePaySystemBlock, который в свою очередь вызовет отрисовку в скрытой области на странице блока с платежными системами, и на основе его сформирует в видимой части информацию о выбранной пс (скрытый/пройденный шаг).
+
+можно добавить, что расположение блоков можно поменять в файле template.php (блоки выделены комментариями)
+*/
+
 BX.namespace('BX.Sale.OrderAjaxComponent');
 
 (function() {
@@ -149,8 +164,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!this.result.IS_AUTHORIZED || typeof this.result.LAST_ORDER_DATA.FAIL !== 'undefined')
 				this.initFirstSection();
 
-			this.initOptions();
-			this.editOrder();
+			this.initOptions();  	// виконується першим
+			this.editOrder(); 		// настройка і заповнення блоків
 			this.bindEvents();
 
 			this.orderBlockNode.removeAttribute('style');
@@ -168,16 +183,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
             console.log('init:this:');
             console.log(this);
-			//this.l(this);
-		},
-
-		l: function(data){
-			for(var i in data){
-				if(typeof data[i] !== 'function'){
-                    console.log(i + ':'+ typeof data[i]);
-					console.log(data[i]);
-				}
-			}
 		},
 
 		/**
@@ -1776,6 +1781,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		clickNextAction: function(event)
 		{
+			console.log('clickNextAction:');
 			var target = event.target || event.srcElement,
 				actionSection = BX.findParent(target, {className : "bx-active"}),
 				section = this.getNextSection(actionSection),
@@ -1810,6 +1816,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		clickPrevAction: function(event)
 		{
+			console.log('clickPrevAction:');
 			var target = event.target || event.srcElement,
 				actionSection = BX.findParent(target, {className: "bx-active"}),
 				section = this.getPrevSection(actionSection);
@@ -1919,6 +1926,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		markSectionAsCompleted: function(section)
 		{
+			console.log('markSectionAsCompleted:');
 			var titleNode;
 
 			if (
@@ -1999,6 +2007,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		fade: function(node, nextSection)
 		{
+			console.log('fade: --> return');
+			return;
+
 			if (!node || !node.id || this.activeSectionId != node.id)
 				return;
 
@@ -2146,6 +2157,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		showByClick: function(event)
 		{
+			console.log('showByClick:');
 			var target = event.target || event.srcElement,
 				showNode = BX.findParent(target, {className: "bx-active"}),
 				fadeNode = BX(this.activeSectionId),
@@ -2172,6 +2184,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		showActualBlock: function()
 		{
+			console.log('showActualBlock:');
 			var allSections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				i = 0;
 
@@ -2205,6 +2218,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		getBlockFooter: function(node)
 		{
+			console.log('getBlockFooter: --> return');
+			return;
+
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				firstSection = sections[0],
 				lastSection = sections[sections.length - 1],
@@ -2212,6 +2228,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				isLastNode = false,
 				buttons = [];
 
+			/*
 			if (currentSection && currentSection.id.indexOf(firstSection.id) == '-1')
 			{
 				buttons.push(
@@ -2227,6 +2244,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					})
 				);
 			}
+			*/
 
 			if (currentSection && currentSection.id.indexOf(lastSection.id) != '-1')
 				isLastNode = true;
@@ -2354,6 +2372,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		changeVisibleContent: function()
 		{
+			console.log('changeVisibleContent:');
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				i, state;
 
@@ -2424,6 +2443,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		editOrder: function()
 		{
+		    console.log('editOrder:');
 			if (!this.orderBlockNode || !this.result)
 				return;
 
@@ -2464,6 +2484,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		editSection: function(section)
 		{
+			console.log('editSection:');
 			if (!section || !section.id)
 				return;
 
@@ -4183,6 +4204,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editFadeRegionContent: function(node)
 		{
+			console.log('editFadeRegionContent:');
 			if (!node || !this.locationsInitialized)
 				return;
 
@@ -5043,6 +5065,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editFadePaySystemContent: function(node)
 		{
+			console.log('editFadePaySystemContent:');
 			var selectedPaySystem = this.getSelectedPaySystem(),
 				errorNode = this.paySystemHiddenBlockNode.querySelector('div.alert.alert-danger'),
 				warningNode = this.paySystemHiddenBlockNode.querySelector('div.alert.alert-warning.alert-show'),
@@ -5557,6 +5580,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editFadeDeliveryContent: function(node)
 		{
+			console.log('editFadeDeliveryContent:');
 			var selectedDelivery = this.getSelectedDelivery(),
 				name = this.params.SHOW_DELIVERY_PARENT_NAMES != 'N' ? selectedDelivery.NAME : selectedDelivery.OWN_NAME,
 				errorNode = this.deliveryHiddenBlockNode.querySelector('div.alert.alert-danger'),
@@ -6496,8 +6520,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.editFadePropsContent(newContent);
 		},
 
-		editFadePropsContent: function(node)
+        editFadePropsContent: function(node)
 		{
+			console.log('editFadePropsContent:');
 			if (!node || !this.locationsInitialized)
 				return;
 
