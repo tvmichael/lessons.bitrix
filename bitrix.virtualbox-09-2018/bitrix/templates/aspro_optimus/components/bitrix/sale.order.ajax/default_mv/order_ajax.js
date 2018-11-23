@@ -165,7 +165,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.initFirstSection();
 
 			this.initOptions();  	// виконується першим
-			this.editOrder(); 		// настройка і заповнення блоків
+			this.editOrder(); 		// настройка і заповнення блоків - основний метод
 			this.bindEvents();
 
 			this.orderBlockNode.removeAttribute('style');
@@ -2007,8 +2007,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		fade: function(node, nextSection)
 		{
-			console.log('fade: --> return');
-			return;
+			console.log('fade:');
+
 
 			if (!node || !node.id || this.activeSectionId != node.id)
 				return;
@@ -2219,7 +2219,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		getBlockFooter: function(node)
 		{
 			console.log('getBlockFooter: --> return');
-			return;
 
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				firstSection = sections[0],
@@ -2228,7 +2227,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				isLastNode = false,
 				buttons = [];
 
-			/*
+
 			if (currentSection && currentSection.id.indexOf(firstSection.id) == '-1')
 			{
 				buttons.push(
@@ -2244,7 +2243,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					})
 				);
 			}
-			*/
 
 			if (currentSection && currentSection.id.indexOf(lastSection.id) != '-1')
 				isLastNode = true;
@@ -6858,14 +6856,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		insertStringProperty: function(property, propsItemNode, disabled)
 		{
+            console.log('insertStringProperty:');
 			var prop, inputs, values, i, propContainer;
 
 			if (disabled)
 			{
 				prop = this.propsHiddenBlockNode.querySelector('div[data-property-id-row="' + property.getId() + '"]');
 
-                console.log('prop');
-                console.log(prop);
+                console.log('{prop}');
+                //console.log(prop);
 
 				if (prop)
 				{
