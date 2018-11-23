@@ -380,7 +380,7 @@ table.colored_table{width:100%;box-sizing:border-box;-moz-box-sizing:border-box;
 	color:#fff;
 	border-bottom:2px solid #212121 !important;
 	background:#848484 !important;
-	background:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJod…EiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+) !important;
+	background:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodï¿½EiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+) !important;
 	background:-moz-linear-gradient(top, #848484 0%, #464646 100%) !important;
 	background:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#848484), color-stop(100%,#464646)) !important;
 	background:-webkit-linear-gradient(top, #848484 0%,#464646 100%) !important;
@@ -1229,14 +1229,22 @@ body .flexslider li, body .flex-direction-nav li{padding:0px;}
 .bx-ie .best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block >div{float:left;}
 .best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block .catalog_item_wrapp.col-3{width:33%;}
 .best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block .catalog_item_wrapp.col-2{width:50%;}
-.best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block .catalog_item_wrapp .catalog_item{margin:0px;padding:0px;overflow: visible !important;}
+
+.best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block .catalog_item_wrapp .catalog_item{
+	margin:0px;
+	padding:0px;
+	overflow: visible !important;
+}
 .best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block .catalog_item_wrapp .catalog_item .inner_wrap{padding:20px;border:1px solid #eaebec;background: #fff;-webkit-transition: box-shadow ease-out 0.2s, border ease-out 0.2s;-moz-transition: box-shadow ease-out 0.2s, border ease-out 0.2s;-o-transition: box-shadow ease-out 0.2s, border ease-out 0.2s;
     transition: box-shadow ease-out 0.2s, border ease-out 0.2s;}
-.footer_button{opacity: 0; visibility: hidden;height: 0;-webkit-transition: all .1s ease;-moz-transition: all .1s ease;transition: all .1s ease;text-align: center;font-size:13px;color:#333;}
+/*.footer_button{opacity: 0; visibility: hidden;height: 0;-webkit-transition: all .1s ease;-moz-transition: all .1s ease;transition: all .1s ease;text-align: center;font-size:13px;color:#333;}*/
+.footer_button{opacity: 1; visibility: visible;height: auto;-webkit-transition: all .1s ease;-moz-transition: all .1s ease;transition: all .1s ease;text-align: center;font-size:13px;color:#333;}
+
 .footer_button .name{color:#777;}
 .footer_button .char .char_item{margin:0px 0px 3px;line-height: 18px;}
 .footer_button .char .char_item:last-child{margin-bottom:0px;}
-.item .catalog_item:hover .footer_button{opacity: 1;visibility: visible;height: 30px;margin: 11px 0px 0px;height:auto;}
+/*.item .catalog_item:hover .footer_button{opacity: 1;visibility: visible;height: 30px;margin: 11px 0px 0px;height:auto;}*/
+
 .best_block.tab_slider_wrapp .item .catalog_item:hover .item_info, .block .catalog_block .catalog_item_wrapp .catalog_item:hover .item_info{height:auto !important;}
 .best_block.tab_slider_wrapp ul.tabs_content li.tab .catalog_block .catalog_item_wrapp .catalog_item:hover .inner_wrap {border-color:#fff;box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.15);}
 .best_block.tab_slider_wrapp .item .catalog_item .item_info {transition: height ease 0.8s 1.2s; text-align: center;}
@@ -1815,7 +1823,7 @@ div.item-title a span {padding:0px 0px 0px;}
 .more_text_ajax:after{width:17px;height:17px;left:5px;top:11px;background: #ddd url('images/ai.png') -464px -4px no-repeat;-webkit-transition:background 0.7s ease-in-out;-moz-transition:background 0.7s ease-in-out; -o-transition:background 0.7s ease-in-out; transition:background 0.7s ease-in-out;}
 .more_text_ajax.loading:after{-webkit-animation:spinner .5s linear infinite !important;animation:spinner .5s linear infinite !important;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d; -ms-transform-style:preserve-3d; transform-style:preserve-3d;}
 .more_text_ajax:hover:after, .ajax_load_btn:hover .more_text_ajax:after{-webkit-animation:spinner .5s ease-out 1;animation:spinner .5s ease 1;-webkit-transform-style:preserve-3d;-moz-transform-style:preserve-3d; -ms-transform-style:preserve-3d; transform-style:preserve-3d;}
-/* WebKit è Opera */
+/* WebKit ï¿½ Opera */
 @-webkit-keyframes spinner{
 	from{
 		-webkit-transform:rotate(360deg);
