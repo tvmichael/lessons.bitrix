@@ -321,7 +321,7 @@ else
 		<input type="hidden" name="<?=$arParams['ACTION_VARIABLE']?>" value="saveOrderAjax">
 		<input type="hidden" name="location_type" value="code">
 		<input type="hidden" name="BUYER_STORE" id="BUYER_STORE" value="<?=$arResult['BUYER_STORE']?>">
-		<div id="bx-soa-order" class="row bx-<?=$arParams['TEMPLATE_THEME']?>" style="opacity: 1;">
+		<div id="bx-soa-order" class="row bx-<?=$arParams['TEMPLATE_THEME']?>" style="opacity: 0;">
 			<!--	MAIN BLOCK	-->
 			<div class="col-sm-9 bx-soa">
 				<div id="bx-soa-main-notifications">
@@ -493,7 +493,7 @@ else
 				</div>
 
 
-				<div style="border:5px solid #ff911b; margin-top:100px; padding:10px; display:;">
+				<div style="border:5px solid #ff911b; margin-top:100px; padding:10px; display:none;">
 					<div id='bx-soa-basket-hidden' class="bx-soa-section"></div>
 					<div id='bx-soa-region-hidden' class="bx-soa-section"></div>
 					<div id='bx-soa-paysystem-hidden' class="bx-soa-section"></div>

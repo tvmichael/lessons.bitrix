@@ -159,6 +159,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.initUserConsent();
 			}
 
+			// TODO 2. додаємо підгрузку sendRequest, без нього не всі блоки розкриті (причина ще не вияснена)
+            // якщо включити - 'Автозаполнение оплаты и доставки по предыдущему заказу:' то останній блок буда заповнений
+			// і звернутий (можна розвернути якщо залишити клік на 'изменить')
+            this.sendRequest();
+
+
             console.log('__________')
             console.log('END SCRIPT')
             console.log('this:');console.log(this);
@@ -203,6 +209,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						console.log('sendRequest: BX.ajax');
                         console.log(result);
 
+                        this.initFirstSection();
+
 						this.saveFiles();
 						switch (action)
 						{
@@ -240,6 +248,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						}
 						BX.cleanNode(this.savedFilesBlockNode);
 						this.endLoader();
+
+						// TODO 3. розкриваємо усі блоки
+                        this.showAll();
 					}, this),
 					onfailure: BX.delegate(function(){
 						this.endLoader();
@@ -1302,7 +1313,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		initFirstSection: function()
 		{
-			//var firstSection = this.orderBlockNode.querySelector('.bx-soa-section.bx-active');
+			// var firstSection = this.orderBlockNode.querySelector('.bx-soa-section.bx-active');
             // TODO 1. першим блоком робимо propsBlockNode який є останнім, для проходу через всі блоки і їх активації
             var firstSection = this.propsBlockNode;
 
@@ -2076,14 +2087,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		    console.log('show:');
 			if (!node || !node.id || this.activeSectionId == node.id)
 				return;
-
-			this.activeSectionId = node.id;
+ 			this.activeSectionId = node.id;
 			BX.removeClass(node, 'bx-step-error bx-step-warning');
 
 			switch (node.id)
 			{
 				case this.authBlockNode.id:
-					//this.authBlockNode.style.display = '';
+					this.authBlockNode.style.display = '';
 					BX.addClass(this.authBlockNode, 'bx-active');
 					break;
 				case this.basketBlockNode.id:
@@ -2118,6 +2128,24 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			BX.removeClass(node, 'bx-step-completed');
 		},
 
+		showAll: function() // розкриваємо всі блоки
+		{
+			var masId = [
+				'bx-soa-basket', 	// для коректної роботи закоментувати перший або останній
+				'bx-soa-region',
+				'bx-soa-paysystem',
+				'bx-soa-delivery',
+				'bx-soa-pickup',
+				'bx-soa-properties'
+                //'bx-soa-basket',	//
+			];
+            for (var i=0; i < masId.length-1; i++ ) // (masId.length -1) віднімаємо 1 - протестувати чи треба
+            {
+                console.log(masId[i]);
+                this.show(BX(masId[i]));
+            }
+		},
+
 		showByClick: function(event)
 		{
 		    console.log('showByClick:');
@@ -2132,8 +2160,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.reachGoal('edit', showNode);  // Yandex
 
-			// fadeNode && this.fade(fadeNode);
-			this.show(showNode);
+			fadeNode && this.fade(fadeNode);
+            this.show(showNode);
 
 			setTimeout(BX.delegate(function(){
 				if (BX.pos(showNode).top < scrollTop)
