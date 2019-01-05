@@ -109,14 +109,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			this.propsBlockNode = BX(parameters.propsBlockId);
 			this.propsHiddenBlockNode = BX(parameters.propsBlockId + '-hidden');
 
-			if (this.result.SHOW_AUTH)
+			// TODO ... в authBlockNode можна помістити блок для авторизації, може пригодитися
+			if (this.result.SHOW_AUTH) // показувати вгорі блок авторизації (ще не розібрався як працює)
 			{
 				this.authBlockNode.style.display = '';
 				BX.addClass(this.authBlockNode, 'bx-active');
 				this.authGenerateUser = this.result.AUTH.new_user_registration_email_confirmation != 'Y';
 			}
 
-			if (this.totalBlockNode)
+			if (this.totalBlockNode) // правий плаваючий блок із загальною сумою
 			{
 				this.totalInfoBlockNode = this.totalBlockNode.querySelector('.bx-soa-cart-total');
 				this.totalGhostBlockNode = this.totalBlockNode.querySelector('.bx-soa-cart-total-ghost');
@@ -137,12 +138,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (!this.result.IS_AUTHORIZED || typeof this.result.LAST_ORDER_DATA.FAIL !== 'undefined')
 				this.initFirstSection();
+			// TODO 1. в initFirstSection першим блоком робимо propsBlockNode для проходу через всі блоки
 
 			this.initOptions();
 			this.editOrder();
-			this.bindEvents();
+			this.bindEvents(); //Binds main events for scrolling/resizing
 
-			this.orderBlockNode.removeAttribute('style');
+			// знімає прозорість з головного блоку після обробки скриптом
+            this.orderBlockNode.removeAttribute('style');
+
 			this.basketBlockScrollCheck();
 
 			if (this.params.USE_ENHANCED_ECOMMERCE === 'Y')
@@ -154,6 +158,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				this.initUserConsent();
 			}
+
+            console.log('__________')
+            console.log('END SCRIPT')
+            console.log('this:');console.log(this);
+            console.log('this.result:');console.log(this.result);
 		},
 
 		/**
@@ -190,6 +199,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					onsuccess: BX.delegate(function(result) {
 						if (result.redirect && result.redirect.length)
 							document.location.href = result.redirect;
+
+						console.log('sendRequest: BX.ajax');
+                        console.log(result);
 
 						this.saveFiles();
 						switch (action)
@@ -317,6 +329,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		saveOrder: function(result)
 		{
+		    console.log('saveOrder:');
 			// safari mobile fix
 			result = result.replace(/<a href="\S*">(\S*)<\/a>/g, '$1');
 			
@@ -1289,7 +1302,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		initFirstSection: function()
 		{
-			var firstSection = this.orderBlockNode.querySelector('.bx-soa-section.bx-active');
+			//var firstSection = this.orderBlockNode.querySelector('.bx-soa-section.bx-active');
+            // TODO 1. першим блоком робимо propsBlockNode який є останнім, для проходу через всі блоки і їх активації
+            var firstSection = this.propsBlockNode;
+
 			BX.addClass(firstSection, 'bx-selected');
 			this.activeSectionId = firstSection.id;
 		},
@@ -1343,7 +1359,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
-		reachGoal: function(goal, section)
+		reachGoal: function(goal, section) // Yandex
 		{
 			var counter = this.params.YM_GOALS_COUNTER || '',
 				useGoals = this.params.USE_YM_GOALS == 'Y' && typeof window['yaCounter' + counter] !== 'undefined',
@@ -1356,7 +1372,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
-		getGoalId: function(goal, section)
+		getGoalId: function(goal, section)  // Yandex
 		{
 			if (!goal)
 				return '';
@@ -1728,6 +1744,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		clickNextAction: function(event)
 		{
+		    console.log('clickNextAction:');
 			var target = event.target || event.srcElement,
 				actionSection = BX.findParent(target, {className : "bx-active"}),
 				section = this.getNextSection(actionSection),
@@ -1762,6 +1779,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		clickPrevAction: function(event)
 		{
+		    console.log('clickPrevAction:');
 			var target = event.target || event.srcElement,
 				actionSection = BX.findParent(target, {className: "bx-active"}),
 				section = this.getPrevSection(actionSection);
@@ -1871,6 +1889,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		markSectionAsCompleted: function(section)
 		{
+		    console.log(' markSectionAsCompleted:');
 			var titleNode;
 
 			if (
@@ -1951,8 +1970,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		fade: function(node, nextSection)
 		{
-			if (!node || !node.id || this.activeSectionId != node.id)
+		    if (!node || !node.id || this.activeSectionId != node.id)
 				return;
+
+            console.log('fade:');
 
 			this.hasErrorSection[node.id] = false;
 
@@ -2052,6 +2073,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		show: function(node)
 		{
+		    console.log('show:');
 			if (!node || !node.id || this.activeSectionId == node.id)
 				return;
 
@@ -2061,7 +2083,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			switch (node.id)
 			{
 				case this.authBlockNode.id:
-					this.authBlockNode.style.display = '';
+					//this.authBlockNode.style.display = '';
 					BX.addClass(this.authBlockNode, 'bx-active');
 					break;
 				case this.basketBlockNode.id:
@@ -2098,17 +2120,19 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		showByClick: function(event)
 		{
+		    console.log('showByClick:');
+
 			var target = event.target || event.srcElement,
-				showNode = BX.findParent(target, {className: "bx-active"}),
+				showNode = BX.findParent(target, {className: "bx-active"}), // current target block
 				fadeNode = BX(this.activeSectionId),
 				scrollTop = BX.GetWindowScrollPos().scrollTop;
 
 			if (!showNode || BX.hasClass(showNode, 'bx-selected'))
-				return BX.PreventDefault(event);
+				return BX.PreventDefault(event); // stop event
 
-			this.reachGoal('edit', showNode);
+			this.reachGoal('edit', showNode);  // Yandex
 
-			fadeNode && this.fade(fadeNode);
+			// fadeNode && this.fade(fadeNode);
 			this.show(showNode);
 
 			setTimeout(BX.delegate(function(){
@@ -2116,7 +2140,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.animateScrollTo(showNode, 300);
 			}, this), 320);
 
-			return BX.PreventDefault(event);
+			return BX.PreventDefault(event); // stop event
 		},
 
 		/**
@@ -2124,6 +2148,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		showActualBlock: function()
 		{
+		    console.log('showActualBlock:');
 			var allSections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				i = 0;
 
@@ -2157,6 +2182,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		getBlockFooter: function(node)
 		{
+		    console.log('getBlockFooter:');
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				firstSection = sections[0],
 				lastSection = sections[sections.length - 1],
@@ -2274,6 +2300,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		shouldBeSectionVisible: function(sections, currentPosition)
 		{
+		    console.log('shouldBeSectionVisible:');
 			var state = false, editStepNode;
 
 			if (!sections || !sections.length)
@@ -2306,6 +2333,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		changeVisibleContent: function()
 		{
+		    console.log('changeVisibleContent:');
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				i, state;
 
@@ -2331,6 +2359,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						)
 					)
 					{
+                        console.log('   changeVisibleContent:' + i);
 						this.fade(sections[i]);
 						this.markSectionAsCompleted(sections[i]);
 						this.show(sections[i + 1]);
@@ -2353,6 +2382,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		changeVisibleSection: function(section, state)
 		{
+		    console.log('changeVisibleSection:');
 			var titleNode, content, editStep;
 
 			if (section.id !== this.basketBlockNode.id)
@@ -2379,7 +2409,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!this.orderBlockNode || !this.result)
 				return;
 
-			if (this.result.DELIVERY.length > 0)
+			if (this.result.DELIVERY.length > 0) // якщо є служби доставки то показуємо блок або ні
 			{
 				BX.addClass(this.deliveryBlockNode, 'bx-active');
 				this.deliveryBlockNode.removeAttribute('style');
@@ -2395,6 +2425,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.checkPickUpShow();
 
+			// перебираємо усі блоки і редагуємо їх
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'), i;
 			for (i in sections)
 			{
@@ -2404,7 +2435,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}
 			}
 
-			this.editTotalBlock();
+			this.editTotalBlock(); // right block with total price
 			this.totalBlockFixFont();
 
 			this.showErrors(this.result.ERROR, false);
@@ -2419,13 +2450,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!section || !section.id)
 				return;
 
+            console.log('editSection:');
+
 			if (this.result.SHOW_AUTH && section.id != this.authBlockNode.id && section.id != this.basketBlockNode.id)
-				section.style.display = 'none';
+                section.style.display = 'none';
 			else if (section.id != this.pickUpBlockNode.id)
 				section.style.display = '';
 
 			var active = section.id == this.activeSectionId,
-				titleNode = section.querySelector('.bx-soa-section-title-container'),
+				titleNode = section.querySelector('.bx-soa-section-title-container'), // верхінй заголовок блоку
 				editButton, errorContainer;
 
 			BX.unbindAll(titleNode);
@@ -2464,7 +2497,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					this.editDeliveryBlock(active);
 					break;
 				case this.pickUpBlockNode.id:
-					this.editPickUpBlock(active);
+					this.editPickUpBlock(active); // пункти самовивозу
 					break;
 				case this.propsBlockNode.id:
 					this.editPropsBlock(active);
@@ -4049,6 +4082,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editRegionBlock: function(active)
 		{
+		    console.log('editRegionBlock (1):' + active);
+
 			if (!this.regionBlockNode || !this.regionHiddenBlockNode || !this.result.PERSON_TYPE)
 				return;
 
@@ -4065,6 +4100,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editActiveRegionBlock: function(activeNodeMode)
 		{
+            console.log('editActiveRegionBlock (3):' + activeNodeMode);
+
+            // беремо 'контекст' з відповідного блоку якщо активний то regionBlockNode якщо ні то з regionHiddenBlockNode
 			var node = activeNodeMode ? this.regionBlockNode : this.regionHiddenBlockNode,
 				regionContent, regionNode, regionNodeCol;
 
@@ -4118,12 +4156,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
-		editFadeRegionBlock: function()
+		editFadeRegionBlock: function() // редагуємо прифований блок з регіонами
 		{
+            console.log('editFadeRegionBlock (2):');
+
+            // беремо 'контекст' з regionBlockNode (в блоці завжди є повна або скорочена інформація)
 			var regionContent = this.regionBlockNode.querySelector('.bx-soa-section-content'), newContent;
 
 			if (this.initialized.region)
 			{
+                // якщо включений показ регіонів то переміщуємо 'контекст' до прихованого блоку regionHiddenBlockNode
 				this.regionHiddenBlockNode.appendChild(regionContent);
 			}
 			else
@@ -4132,7 +4174,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				BX.remove(BX.lastChild(this.regionBlockNode));
 			}
 
-			newContent = this.getNewContainer(true);
+			newContent = this.getNewContainer(true); // створює пустий dіv контейнер
 			this.regionBlockNode.appendChild(newContent);
 			this.editFadeRegionContent(newContent);
 		},
@@ -4142,6 +4184,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!node || !this.locationsInitialized)
 				return;
 
+            console.log('editFadeRegionContent (4):');
+
 			var selectedPersonType = this.getSelectedPersonType(),
 				errorNode = this.regionHiddenBlockNode.querySelector('.alert.alert-danger'),
 				addedHtml = '', props = [], locationProperty,
@@ -4149,6 +4193,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				fadeParamName, i, k, locationString, validRegionErrors;
 
 			BX.cleanNode(node);
+
+            console.log(selectedPersonType);
 
 			if (errorNode)
 				node.appendChild(errorNode.cloneNode(true));
@@ -8073,7 +8119,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		setAnalyticsDataLayer: function(action, id)
 		{
-			if (!this.params.DATA_LAYER_NAME)
+			/*if (!this.params.DATA_LAYER_NAME)
 				return;
 
 			var info, i;
@@ -8134,7 +8180,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			window[this.params.DATA_LAYER_NAME] = window[this.params.DATA_LAYER_NAME] || [];
-			window[this.params.DATA_LAYER_NAME].push(info);
+			window[this.params.DATA_LAYER_NAME].push(info);*/
 		},
 
 		isOrderSaveAllowed: function()

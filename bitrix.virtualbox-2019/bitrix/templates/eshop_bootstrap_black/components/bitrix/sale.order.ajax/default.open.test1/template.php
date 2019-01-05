@@ -321,7 +321,7 @@ else
 		<input type="hidden" name="<?=$arParams['ACTION_VARIABLE']?>" value="saveOrderAjax">
 		<input type="hidden" name="location_type" value="code">
 		<input type="hidden" name="BUYER_STORE" id="BUYER_STORE" value="<?=$arResult['BUYER_STORE']?>">
-		<div id="bx-soa-order" class="row bx-<?=$arParams['TEMPLATE_THEME']?>" style="opacity: 0">
+		<div id="bx-soa-order" class="row bx-<?=$arParams['TEMPLATE_THEME']?>" style="opacity: 1;">
 			<!--	MAIN BLOCK	-->
 			<div class="col-sm-9 bx-soa">
 				<div id="bx-soa-main-notifications">
@@ -329,13 +329,24 @@ else
 					<div data-type="informer" style="display:none"></div>
 				</div>
 				<!--	AUTH BLOCK	-->
-				<div id="bx-soa-auth" class="bx-soa-section bx-soa-auth" style="display:none">
+				<div id="bx-soa-auth" class="bx-soa-section bx-soa-auth" style="display:;">
 					<div class="bx-soa-section-title-container">
 						<h2 class="bx-soa-section-title col-sm-9">
 							<span class="bx-soa-section-title-count"></span><?=$arParams['MESS_AUTH_BLOCK_NAME']?>
 						</h2>
 					</div>
-					<div class="bx-soa-section-content container-fluid"></div>
+					<div class="bx-soa-section-content container-fluid">
+                        <?$APPLICATION->IncludeComponent(
+                            "bitrix:system.auth.form",
+                            "",
+                            Array(
+                                "FORGOT_PASSWORD_URL" => "/",
+                                "PROFILE_URL" => "/",
+                                "REGISTER_URL" => "/",
+                                "SHOW_ERRORS" => "N"
+                            )
+                        );?>
+                    </div>
 				</div>
 
 				<!--	DUPLICATE MOBILE ORDER SAVE BLOCK	-->
@@ -386,7 +397,7 @@ else
 						</div>
 						<div class="bx-soa-section-content container-fluid"></div>
 					</div>
-					<!--	PICKUP BLOCK	-->
+					<!--	PICKUP BLOCK    ---    ПУНКТИ САМОВИВОЗУ  -->
 					<div id="bx-soa-pickup" data-visited="false" class="bx-soa-section" style="display:none">
 						<div class="bx-soa-section-title-container">
 							<h2 class="bx-soa-section-title col-sm-9">
@@ -481,7 +492,8 @@ else
 					</a>
 				</div>
 
-				<div style="display: none;">
+
+				<div style="border:5px solid #ff911b; margin-top:100px; padding:10px; display:;">
 					<div id='bx-soa-basket-hidden' class="bx-soa-section"></div>
 					<div id='bx-soa-region-hidden' class="bx-soa-section"></div>
 					<div id='bx-soa-paysystem-hidden' class="bx-soa-section"></div>
@@ -502,8 +514,9 @@ else
 		</div>
 	</form>
 
-	<div id="bx-soa-saved-files" style="display:none"></div>
-	<div id="bx-soa-soc-auth-services" style="display:none">
+    <br><br><hr>
+	<div id="bx-soa-saved-files" style="display:;"></div>
+	<div id="bx-soa-soc-auth-services" style="display:;">
 		<?
 		$arServices = false;
 		$arResult['ALLOW_SOCSERV_AUTHORIZATION'] = Main\Config\Option::get('main', 'allow_socserv_authorization', 'Y') != 'N' ? 'Y' : 'N';
@@ -538,8 +551,8 @@ else
 		?>
 	</div>
 
-	<div style="display: none">
-		<?
+	<div data-location="sale.location.selector.steps-search" style="display:;">
+		<?/*
 		// we need to have all styles for sale.location.selector.steps, but RestartBuffer() cuts off document head with styles in it
 		$APPLICATION->IncludeComponent(
 			'bitrix:sale.location.selector.steps',
@@ -553,7 +566,7 @@ else
 			array(),
 			false
 		);
-		?>
+		*/?>
 	</div>
 	<?
 	$signer = new Main\Security\Sign\Signer;
@@ -678,3 +691,9 @@ else
 	}
 }
 ?>
+
+<pre>
+    <?
+    //print_r($arResult);
+    ?>
+</pre>
