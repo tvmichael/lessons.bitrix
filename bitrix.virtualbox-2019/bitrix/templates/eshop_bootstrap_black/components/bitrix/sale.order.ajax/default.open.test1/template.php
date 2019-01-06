@@ -493,7 +493,7 @@ else
 				</div>
 
 
-				<div style="border:5px solid #ff911b; margin-top:100px; padding:10px; display:none;">
+				<div style="border:5px solid #ff911b; margin-top:100px; padding:10px; display:;">
 					<div id='bx-soa-basket-hidden' class="bx-soa-section"></div>
 					<div id='bx-soa-region-hidden' class="bx-soa-section"></div>
 					<div id='bx-soa-paysystem-hidden' class="bx-soa-section"></div>
