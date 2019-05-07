@@ -30,7 +30,7 @@ $arComponentParameters = array(
             "NAME" => "BASKET_LINK_PHR",
             "TYPE" => "STRING",
             "MULTIPLE" => "N",
-            "DEFAULT" => "/personal/basket.php",
+            "DEFAULT" => "",
             "COLS" => 25
         ),
     )

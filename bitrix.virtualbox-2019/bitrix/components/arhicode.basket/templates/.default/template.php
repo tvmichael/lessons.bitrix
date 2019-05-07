@@ -44,12 +44,14 @@ Asset::getInstance()->addJs($templateFolder."/vue.min.js");
 </div>
 
 <script>
-    //$arOrderProps = $this->order->getPropertyCollection()->getArray();
     var arhicodeSale = {
         message: 'TEST__1',
         result: <?=CUtil::PhpToJSObject($arResult);?>,
     };
 </script>
+
+
+
 
 
 <!-- ---------------------------------------------------------- -->
@@ -63,8 +65,8 @@ Asset::getInstance()->addJs($templateFolder."/vue.min.js");
         echo '<hr>';
         echo 'RESULT:<br>';
         print_r($arResult);
-        echo $templateFolder.'<br>';
-        echo SITE_TEMPLATE_PATH;
+        //echo $templateFolder.'<br>';
+        //echo SITE_TEMPLATE_PATH;
     ?>
     </pre>
 </div>
