@@ -9,12 +9,15 @@ define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/test/log.txt");
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
     die();
 
+use Bitrix\Sale;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Fuser;
+use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Context;
+
 
 Class CArhicodeBasketSale extends CBitrixComponent
 {
@@ -23,6 +26,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
      */
     public $order;
     public $basket;
+    public $context;
 
     protected $errors = [];
 
@@ -62,6 +66,12 @@ Class CArhicodeBasketSale extends CBitrixComponent
             $arParams['PERSON_TYPE_ID'] = intval($arParams['PERSON_TYPE_ID']);
         else
             $arParams['PERSON_TYPE_ID'] = 1;
+
+        $arParams['ACTION_VARIABLE'] = isset($arParams['ACTION_VARIABLE']) ? trim($arParams['ACTION_VARIABLE']) : '';
+        if ($arParams['ACTION_VARIABLE'] == '')
+        {
+            $arParams['ACTION_VARIABLE'] = 'soa-action';
+        }
 
         return parent::onPrepareComponentParams($arParams);
     }
@@ -326,12 +336,75 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
     }
 
-    public function doCurrentAction()
+
+
+    /**
+     * Prepares action string to execute in doAction
+     *  - processOrder - process order [including component template]
+     *  - showOrder - show created order [including component template]
+     *  - processOrderAjax - show created order [including component template]
+     *
+     * @return array|string|null
+     */
+    protected function prepareAction()
     {
-        AddMessage2Log("executeComponent", "ArhicodeBasketSale");
+        $action = $this->request->offsetExists($this->arParams['ACTION_VARIABLE'])
+            ? $this->request->get($this->arParams['ACTION_VARIABLE'])
+            : $this->request->get('action');
 
-        $this->createVirtualOrder();
+        if (empty($action))
+        {
+            if ($this->request->get('ORDER_ID') == '')
+            {
+                $action = 'processOrder';
+            }
+            else
+            {
+                $action = 'showOrder';
+            }
+        }
 
+        return $action;
+    }
+
+    /**
+     * Executes prepared action with postfix 'Action'
+     * @param $action
+     */
+    protected function doAction($action)
+    {
+        if (is_callable(array($this, $action."Action")))
+        {
+            call_user_func(
+                array($this, $action."Action")
+            );
+        }
+    }
+
+    /**
+     * Виводимо форму для оформлення замовлення
+     * Формуємо масив `arResult` з основними параметрами
+     */
+    public function processOrderAction()
+    {
+        try {
+            // Створюємо замовлення
+            $this->createVirtualOrder();
+
+            // формуємо масив з даними для сторінки оформлення замовлення
+            $this->getOrderProps(); // збираємо основні властивості кошика і товарів
+            $this->getSalePaySystem(); //
+            $this->getSaleDelivery(); //
+        } catch (Exception $e) {
+            $this->arResult['errors'] = ['error'=>'processOrderAction', 'message'=>$e->getMessage()];
+        }
+    }
+
+    /**
+     * Виводимо результат оформлення замовлення
+     */
+    public function showOrderAction()
+    {
         if(isset($this->request['d']) && $this->request['d'] == 'Y')
         {
             AddMessage2Log("executeComponent: d=Y", "ArhicodeBasketSale");
@@ -347,32 +420,36 @@ Class CArhicodeBasketSale extends CBitrixComponent
             //$this->order->getId();
             AddMessage2Log("executeComponent: ".$this->order->getId(), "ArhicodeBasketSale");
         }
-
-
-        $this->getOrderProps();
-        $this->getSalePaySystem();
-        $this->getSaleDelivery();
-        $this->arResult['errors'] = $this->errors;
     }
 
-
     /**
-     * Без файла component.php Для этого достаточно перекрыть метод executeComponent.
-     * 1. запускается при выполнения компонента.
-     * Данный метод, подключает шаблон.
+     * Без файла 'component.php' Для цього достатньо перекрити метод 'executeComponent'.
+     *  - запускается при виконанні компонента.
+     *  - Данний метод, підключає шаблон.
     */
     public function executeComponent()
     {
-        try
+        global $APPLICATION;
+
+        $this->context = Main\Application::getInstance()->getContext();
+        $isAjaxRequest = $this->request["is_ajax_post"] == "Y";
+        if ($isAjaxRequest)
+            $APPLICATION->RestartBuffer();
+
+        $this->action = $this->prepareAction();
+        Sale\Compatible\DiscountCompatibility::stopUsageCompatible();
+        $this->doAction($this->action);
+        Sale\Compatible\DiscountCompatibility::revertUsageCompatible();
+
+        $this->includeComponentTemplate(); // підключається шаблон 'template.php'.
+
+        if ($isAjaxRequest)
         {
-            $this->doCurrentAction();
-            $this->includeComponentTemplate(); // эта конструкция подключает шаблон.
-            return parent::executeComponent();
+            $APPLICATION->FinalActions();
+            die();
         }
-        catch (SystemException $e)
-        {
-            ShowError($e->getMessage());
-        }
+
+        return parent::executeComponent();
     }
 }
 ?>

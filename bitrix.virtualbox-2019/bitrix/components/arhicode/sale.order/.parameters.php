@@ -21,17 +21,24 @@ $siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
 $arComponentParameters = array(
     "GROUPS" => array(
         "PARAMS" => array(
-            "NAME" => "PARAMS_PHR"
+            "NAME" => GetMessage('SOA_PARAMS_PHR'),
         ),
     ),
     "PARAMETERS" => array(
         "BASKET_PAGE_TEMPLATE" => array(
             "PARENT" => "PARAMS",
-            "NAME" => "BASKET_LINK_PHR",
+            "NAME" => GetMessage('SOA_BASKET_PAGE_TEMPLATE'),
             "TYPE" => "STRING",
             "MULTIPLE" => "N",
-            "DEFAULT" => "",
+            "DEFAULT" => "/personal/cart/",
             "COLS" => 25
+        ),
+        "ACTION_VARIABLE" => array(
+            "NAME" => GetMessage('SOA_ACTION_VARIABLE'),
+            "TYPE" => "STRING",
+            "MULTIPLE" => "N",
+            "DEFAULT" => "soa-action",
+            "PARENT" => "ADDITIONAL_SETTINGS",
         ),
     )
 );

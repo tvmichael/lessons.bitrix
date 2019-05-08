@@ -1,6 +1,15 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @var CMain $APPLICATION
+ * @var CUser $USER
+ * @var SaleOrderAjax $component
+ * @var string $templateFolder
+ */
+
 use Bitrix\Main,
     Bitrix\Main\Localization\Loc,
     Bitrix\Main\Page\Asset;
@@ -43,12 +52,20 @@ Asset::getInstance()->addJs($templateFolder."/vue.min.js");
     </div>
 </div>
 
+
+<?
+$signer = new Main\Security\Sign\Signer;
+$signedParams = $signer->sign(base64_encode(serialize($arParams)), 'sale.order');
+$messages = Loc::loadLanguageFile(__FILE__);
+?>
 <script>
-    var arhicodeSale = {
-        message: 'TEST__1',
+    BX.message(<?=CUtil::PhpToJSObject($messages)?>);
+    var arhicodeSaleOrder = {
+        signedParamsString: '<?=CUtil::JSEscape($signedParams)?>',
         result: <?=CUtil::PhpToJSObject($arResult);?>,
     };
 </script>
+
 
 
 
@@ -62,6 +79,9 @@ Asset::getInstance()->addJs($templateFolder."/vue.min.js");
     <?php
         echo 'PARAMS:<br>';
         print_r($arParams);
+        echo '<br>';
+        print_r($signedParams);
+        print_r($messages);
         echo '<hr>';
         echo 'RESULT:<br>';
         print_r($arResult);
