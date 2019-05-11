@@ -9,8 +9,11 @@ define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/test/log.txt");
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
     die();
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\Discount;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Fuser;
 use \Bitrix\Main;
@@ -27,8 +30,12 @@ Class CArhicodeBasketSale extends CBitrixComponent
     public $order;
     public $basket;
     public $context;
+    public $ajaxData = NULL;
+    public $basketStorage = NULL;
 
     protected $errors = [];
+    protected $checkSession = false;
+
 
     /**
      * arhicodeBasketSale constructor.
@@ -164,60 +171,60 @@ Class CArhicodeBasketSale extends CBitrixComponent
     {
         try {
             // Дані по кошику покупця
-            $this->arResult['Order'] = [
-                'UserId'=>$this->order->getUserId(), // ID пользователя
-                'OrderId'=>$this->order->getId(), // ID заказа
-                'SiteId'=>$this->order->getSiteId(), // ID сайта
-                'PersonTypeId'=>$this->order->getPersonTypeId(), // ID типа покупателя
+            $this->arResult['ORDER'] = [
+                'USER_ID'=>$this->order->getUserId(), // ID пользователя
+                'ORDER_ID'=>$this->order->getId(), // ID заказа
+                'SITE_ID'=>$this->order->getSiteId(), // ID сайта
+                'PERSON_TYPE_ID'=>$this->order->getPersonTypeId(), // ID типа покупателя
 
-                'Price'=>$this->order->getPrice(),// Цена с учетом скидок
-                'DeliveryPrice'=>$this->order->getDeliveryPrice(), // Стоимость доставки
-                'DiscountPrice'=>$this->order->getDiscountPrice(), // Размер скидки
-                'SumPaid'=>$this->order->getSumPaid(), // Оплаченная сумма
-                'Currency'=>$this->order->getCurrency(), // Валюта заказа
+                'PRICE'=>$this->order->getPrice(),// Цена с учетом скидок
+                'DELIVERY_PRICE'=>$this->order->getDeliveryPrice(), // Стоимость доставки
+                'DISCOUNT_PRICE'=>$this->order->getDiscountPrice(), // Размер скидки
+                'SUM_PAID'=>$this->order->getSumPaid(), // Оплаченная сумма
+                'CURRENCY'=>$this->order->getCurrency(), // Валюта заказа
                 //'Fields_#Name#_'=>$this->order->getField('PRICE'), // Также любое поле можно получить по имени
-                //'AvailableFields'=>$this->order->getAvailableFields(), // Список доступных полей
+                //'AVAILABLE_FIELDS'=>$this->order->getAvailableFields(), // Список доступных полей
             ];
 
-            $this->arResult['BasePrice'] = $this->basket->getBasePrice(); // Цена без учета скидок
-            $this->arResult['QuantityList'] = $this->basket->getQuantityList(); // возвращает массив "количеств" товаров в корзине
-            $this->arResult['ListOfFormatText'] = $this->basket->getListOfFormatText(); // возвращает корзину в читаемом виде
+            $this->arResult['BASE_PRICE'] = $this->basket->getBasePrice(); // Цена без учета скидок
+            //$this->arResult['QUANTITY_LIST'] = $this->basket->getQuantityList(); // возвращает массив "количеств" товаров в корзине
+            $this->arResult['LIST_OF_FORMAT_TEXT'] = $this->basket->getListOfFormatText(); // возвращает корзину в читаемом виде
 
             // получение объекта корзины и массива товаров в корзине:
             // getBasketItems(); // все товары
             // getOrderableItems(); // только товары, доступные для заказа
             $arr = [];
-            $productListId = [];
-            foreach ($this->basket->getBasketItems() as $items)
-            {
-                $productListId[] = $items->getProductId();
-                $arr[$items->getProductId()] = [
-                    'id' => $items->getId(), // ID позиции в корзине
-                    'BasketCode' => $items->getBasketCode(), // код корзины
-                    'Quantity' => $items->getQuantity(), // количество товара
-                    'ProductId' => $items->getProductId(), // код товара
-                    'FUserId' => $items->getFUserId(), // id владельца корзины
-                    'canBuy' => $items->canBuy(), // товар доступен для покупки
-                    'Currency' => $items->getCurrency(), // код валюты
-                    'FinalPrice' => $items->getFinalPrice(), // стоимость всех единиц позиции товара
-                    'Price' => $items->getPrice(), // цена с учетом скидок
-                    'BasePrice' => $items->getBasePrice(), // цена без учета скидок
-                    'DefaultPrice' => $items->getDefaultPrice(), // цена по умолчанию
-                    'DiscountPrice' => $items->getDiscountPrice(), // величина скидки
-                    //'CustomPrice' => $items->isCustomPrice(), // цена указана вручную (без использования провайдера)
-                    //'AvailableFields' => $items->getAvailableFields(), //  массив кодов всех полей
-                ];
-            }
-            $this->arResult['ProductList'] = $arr;
-            unset($arr);
 
             // формуємо масив даних по товарах
-            $this->arResult['ProductDataList'] = $this->getProductDataList($productListId);
+            foreach ($this->basket->getBasketItems() as $items)
+            {
+                $arr[$items->getProductId()] = [
+                    'ID' => $items->getId(), // ID позиции в корзине
+                    'BASKET_CODE' => $items->getBasketCode(), // код корзины
+                    'QUANTITY' => $items->getQuantity(), // количество товара
+                    'PRODUCT_ID' => $items->getProductId(), // код товара
+                    'FUSER_ID' => $items->getFUserId(), // id владельца корзины
+                    'CAN_BUY' => $items->canBuy(), // товар доступен для покупки
+                    'CURRENCY' => $items->getCurrency(), // код валюты
+                    'FINAL_PRICE' => $items->getFinalPrice(), // стоимость всех единиц позиции товара
+                    'PRICE' => $items->getPrice(), // цена с учетом скидок
+                    'FORMAT_PRICE' => CurrencyFormat($items->getPrice(), $items->getCurrency()),
+                    'BASE_PRICE' => $items->getBasePrice(), // цена без учета скидок
+                    'FORMAT_BASE_PRICE' => CurrencyFormat($items->getBasePrice(), $items->getCurrency()),
+                    'DEFAULT_PRICE' => $items->getDefaultPrice(), // цена по умолчанию
+                    'DISCOUNT_PRICE' => $items->getDiscountPrice(), // величина скидки
+                    //'CUSTOMP_RICE' => $items->isCustomPrice(), // цена указана вручную (без использования провайдера)
+                    //'AVAILABLE_FIELDS' => $items->getAvailableFields(), //  массив кодов всех полей
+                    'PROPS' => $this->getProductDataList($items->getProductId()),
+                ];
+            }
+            $this->arResult['PRODUCT_LIST'] = $arr;
+            unset($arr);
 
-            $this->arResult['PaymentSystemId'] = $this->order->getPaymentSystemId(); // массив id способів оплат (в поточному замовленні)
-            $this->arResult['DeliverySystemId'] = $this->order->getDeliverySystemId(); // массив id способів доставки (в поточному замовленні)
+            $this->arResult['PAYMENT_SYSTEM_ORDER'] = $this->order->getPaymentSystemId(); // массив id способів оплат (в поточному замовленні)
+            $this->arResult['DELIVERY_SYSTEM_ORDER'] = $this->order->getDeliverySystemId(); // массив id способів доставки (в поточному замовленні)
 
-            //$this->arResult['DiscountApplyResult'] = $this->order->getDiscount()->getApplyResult(); // список застосованих до замавлення знижок
+            //$this->arResult['DISCOUNT_APPLY_ORDER'] = $this->order->getDiscount()->getApplyResult(); // список застосованих до замавлення знижок
 
         } catch (Exception $e) {
             $this->errors[] = ['message'=>'getOrderProps', 'error'=>$e->getMessage()];
@@ -226,34 +233,28 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
     /**
      * Витягуємо інформацію по товару з кошика
-     * @param bool $listId - масив $id товарів з корзини
-     * @return array - масив з інформацією по товарах в кошику
-     */
-    public function getProductDataList($listId = false)
+     * @param integer $id - товара з корзини
+     * @return array - масив з інформацією по товарy в кошику
+    */
+    public function getProductDataList($id)
     {
-        $products = [];
-        if(isset($listId) && is_array($listId))
-        {
-            foreach ($listId as $id)
-            {
-                // перевіряємо 'товар' чи 'торгова пропозиція' (false - в случае ошибки;)
-                $productSku =  CCatalogSku::GetProductInfo($id); //Метод позволяет получить по ID торгового предложения ID товара.
+        // перевіряємо 'товар' чи 'торгова пропозиція' (false - в случае ошибки;)
+        $productSku =  CCatalogSku::GetProductInfo($id); // Метод позволяет получить по ID торгового предложения ID товара.
 
-                if(is_array($productSku)) // торгова пропозиція, беремо ІД товара по торговій пропозиції
-                    $products[$id] = $this->makeProductDetailInfo($productSku['ID'], $productSku);
-                else // товар
-                    $products[$id] = $this->makeProductDetailInfo($id);
-            }
-        }
+        if(is_array($productSku)) // торгова пропозиція, беремо ІД товара по торговій пропозиції
+            $products = $this->makeProductDetailInfo($productSku['ID'], $productSku);
+        else // товар
+            $products = $this->makeProductDetailInfo($id);
+
         return $products;
     }
 
     /**
      * Беремо дані по товару
-     * @param integer $id - код товару (чи тог=ргової пропозиції)
+     * @param integer $id - код товару (чи тогргової пропозиції)
      * @param bool $sku - масив з торговою пропозицією
      * @return array
-     */
+    */
     public function makeProductDetailInfo($id, $sku=false)
     {
         $arr = [];
@@ -291,9 +292,9 @@ Class CArhicodeBasketSale extends CBitrixComponent
     public function getSalePaySystem()
     {
         $resPaySystem = CSalePaySystem::GetList();
-        $this->arResult["PAY_SYSTEM"] = [];
+        //$this->arResult["PAY_SYSTEM"] = [];
         while ($arPaySystemItem = $resPaySystem->Fetch()) {
-            $this->arResult["PAY_SYSTEM_1"][] = $arPaySystemItem;
+            $this->arResult["PAY_SYSTEM"][] = $arPaySystemItem;
         }
         /*
         $dbPaySystem = CSalePaySystemAction::GetList(Array(), Array(), false, false, Array());
@@ -338,6 +339,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
 
 
+    /* ACTION ------------------------------------------------------------------------------------------------------- */
+
     /**
      * Prepares action string to execute in doAction
      *  - processOrder - process order [including component template]
@@ -364,6 +367,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
             }
         }
 
+        $this->checkSession = check_bitrix_sessid();
         return $action;
     }
 
@@ -393,11 +397,240 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
             // формуємо масив з даними для сторінки оформлення замовлення
             $this->getOrderProps(); // збираємо основні властивості кошика і товарів
-            $this->getSalePaySystem(); //
-            $this->getSaleDelivery(); //
+            $this->getSalePaySystem(); // доступні системи оплати
+            $this->getSaleDelivery(); // отримати доступні доставки
         } catch (Exception $e) {
             $this->arResult['errors'] = ['error'=>'processOrderAction', 'message'=>$e->getMessage()];
         }
+    }
+
+    public function deleteProductAction()
+    {
+        $basket = $this->getBasketStorage()->getBasket();
+        $basketCode = (int)$this->request->get('basketCode');
+
+        $ajaxData = [
+            'ACTION'=>'deleteProduct',
+            'DATA'=>[
+                'PRODUCT_ID'=>$basketCode,
+            ]
+        ];
+
+        if (!$basket->isEmpty())
+        {
+            // @var Sale\BasketItem $item
+            $item = $basket->getItemByBasketCode($basketCode);
+            if ($item)
+            {
+                $deleteResult = $item->delete();
+
+                if ($deleteResult->isSuccess())
+                {
+                    $saveResult = $basket->save();
+
+                    if ($saveResult->isSuccess())
+                    {
+                        $ajaxData['ERROR'] = 'N';
+                    }
+                    else
+                    {
+                        $ajaxData['ERROR'] ='deleteProductAction';
+                    }
+                }
+            }
+            else $ajaxData['ERROR'] ='basket-item';
+        }
+        else $ajaxData['ERROR'] ='basket-isEmpty';
+
+        $this->sendAjaxAnswer($ajaxData);
+    }
+
+    public function changeQuantityAction()
+    {
+        $quantity = (int)$this->request->get('quantity');
+        $basketCode = (int)$this->request->get('basketCode');
+
+        $ajaxData = [
+            'ACTION' => 'changeQuantity',
+            'DATA' => [
+                'PRODUCT_ID' => $basketCode ,
+            ]
+        ];
+
+        $basket = $this->getBasketStorage()->getBasket();
+        $basketItem = $basket->getItemByBasketCode($basketCode);
+
+        $basketItemQuanyity = $basketItem->getQuantity();
+        $ajaxData['quantity'] = $basketItemQuanyity;
+
+        if($basketItemQuanyity != $quantity && $quantity > 0 )
+        {
+            $res = $basketItem->setField('QUANTITY', $quantity);
+            if ($res->isSuccess())
+            {
+                $saveResult = $basket->save();
+
+                if ($saveResult->isSuccess())
+                {
+                    $ajaxData['ERROR'] = 'N';
+                    $ajaxData['DATA']['QUANTITY_NEW'] = $basketItem->getQuantity();
+                    $ajaxData['DATA']['BASE_PRICE'] = $basket->getBasePrice();
+                    $ajaxData['DATA']['PRICE_DISCOUNT_D'] = $this->calculateBasketTotalDiscountPrice($basket);
+                }
+                else
+                {
+                    $ajaxData['ERROR'] = 'changeQuantityAction. Q='.$basketItem->getQuantity();
+                }
+            }
+            else $ajaxData['ERROR'] = 'changeQuantity';
+        } else $ajaxData['ERROR'] = 'quantity = 0 or quantity equal';
+
+
+
+        AddMessage2Log(['changeQuantityAction'=>$ajaxData], "ArhicodeBasketSale");
+        $this->sendAjaxAnswer($ajaxData);
+    }
+
+    /**
+     * V1.
+     * Метод помертає повний масив знижок на товари що в кошику
+     * @param $basket
+     * @return array
+     */
+    public function getDiscountBasket($basket)
+    {
+        $discounts = Discount::loadByBasket($basket);
+        $basket->refreshData(array('PRICE', 'COUPONS'));
+        $discounts->calculate();
+        $discountResult = $discounts->getApplyResult();
+        return $discountResult;
+    }
+
+    /**
+     * V2.
+     * Метод розраховує повну вартість кошика зі скидкою
+     * а також повертає список цін для кожного з товарів
+     * @basket - обєк кошика
+     * @return array
+    */
+    public function calculateBasketTotalDiscountPrice($basket)
+    {
+        if ($basket->count() == 0)
+            return 0;
+
+        Bitrix\Sale\DiscountCouponsManager::freezeCouponStorage();
+        $discounts = Discount::loadByBasket($basket);
+        $basket->refreshData(array('PRICE', 'COUPONS'));
+        $discounts->calculate();
+        $discountResult = $discounts->getApplyResult();
+        Bitrix\Sale\DiscountCouponsManager::unFreezeCouponStorage();
+        if (empty($discountResult['PRICES']['BASKET']))
+            return 0;
+        $result = 0;
+        $discountResult = $discountResult['PRICES']['BASKET'];
+        /** @var BasketItem $basketItem */
+        foreach ($basket as $basketItem)
+        {
+            if (!$basketItem->canBuy())
+                continue;
+            $code = $basketItem->getBasketCode();
+            if (!empty($discountResult[$code]))
+                $result += $discountResult[$code]['PRICE'] * $basketItem->getQuantity();
+            unset($code);
+        }
+        unset($basketItem);
+        return ['FULL_DISCOUNT_PRICE'=>$result, 'DISCOUNT_PRICE_LIST'=>$discountResult];
+    }
+
+    /**
+     * V3.
+     * Метод повертає всі скидки по кошику
+     *  - Застарілий метод
+    */
+    public function getDiscountBasketOld()
+    {
+        $fuserId = CSaleBasket::GetBasketUserID();
+
+        $dbBasketItems = CSaleBasket::GetList(
+            array("ID" => "ASC"),
+            array(
+                "FUSER_ID" => $fuserId,
+                "LID" => SITE_ID,
+                "ORDER_ID" => "NULL",
+                "DELAY"=>"N"
+            ),
+            false,
+            false,
+            array(
+                "ID", "NAME", "CALLBACK_FUNC", "MODULE", "PRODUCT_ID", "PRODUCT_PRICE_ID", "QUANTITY", "DELAY", "CAN_BUY",
+                "PRICE", "WEIGHT", "DETAIL_PAGE_URL", "NOTES", "CURRENCY", "VAT_RATE", "CATALOG_XML_ID",
+                "PRODUCT_XML_ID", "SUBSCRIBE", "DISCOUNT_PRICE", "PRODUCT_PROVIDER_CLASS", "TYPE", "SET_PARENT_ID"
+            )
+        );
+
+        $allSum = 0;
+        $allWeight = 0;
+        $arResult = array();
+
+        while ($arBasketItems = $dbBasketItems->Fetch())
+        {
+            $allSum += ($arBasketItems["PRICE"] * $arBasketItems["QUANTITY"]);
+            $allWeight += ($arBasketItems["WEIGHT"] * $arBasketItems["QUANTITY"]);
+            $arResult[] = $arBasketItems;
+        }
+
+        $arOrder = array(
+            'SITE_ID' => SITE_ID,
+            'USER_ID' => $GLOBALS["USER"]->GetID(),
+            'ORDER_PRICE' => $allSum, // сумма всей корзины
+            'ORDER_WEIGHT' => $allWeight, // вес всей корзины
+            'BASKET_ITEMS' => $arResult // товары сами
+        );
+
+        $arOptions = array(
+            'COUNT_DISCOUNT_4_ALL_QUANTITY' => "Y",
+        );
+
+        $arErrors = array();
+
+        CSaleDiscount::DoProcessOrder($arOrder, $arOptions, $arErrors);
+
+        return $arOrder;
+    }
+
+    /**
+     * Метод повертає кошик користувача
+     * @return Object
+    */
+    protected function getBasketStorage()
+    {
+        if (!isset($this->basketStorage))
+        {
+            $this->basketStorage = Sale\Basket\Storage::getInstance(Fuser::getId(), Context::getCurrent()->getSite());
+        }
+        return $this->basketStorage;
+    }
+
+    /**
+     * Ajax action - оновлюємо кошик відповідно до змін які прийшли
+     */
+    protected function refreshBasketAjaxAction()
+    {
+
+    }
+
+    public function sendAjaxAnswer($data)
+    {
+        global $APPLICATION;
+
+        AddMessage2Log(['sendAjaxAnswer'=>$data], "ArhicodeBasketSale");
+
+        $APPLICATION->RestartBuffer();
+        header('Content-Type: application/json');
+        echo Json::encode($data);
+
+        CMain::FinalActions();
+        die();
     }
 
     /**
@@ -431,7 +664,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
     {
         global $APPLICATION;
 
-        $this->context = Main\Application::getInstance()->getContext();
+        $this->context = Application::getInstance()->getContext();
         $isAjaxRequest = $this->request["is_ajax_post"] == "Y";
         if ($isAjaxRequest)
             $APPLICATION->RestartBuffer();
