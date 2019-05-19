@@ -1,11 +1,4 @@
 <?php
-/**
- * Class.php - это зарезервированное имя файла, и этот файл автоматически подключается при вызове:
- * $APPLICATION->IncludeComponent()
- */
-define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/test/log.txt");
-//AddMessage2Log("onPrepareComponentParams", "ArhicodeBasketSale");
-
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
     die();
 
@@ -19,13 +12,12 @@ use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\PaySystem;
-
 use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Context;
-
-use Bitrix\Main\Diag\Debug;
+//
+//use Bitrix\Main\Diag\Debug;
 
 
 Class CArhicodeBasketSale extends CBitrixComponent
@@ -41,6 +33,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
     public $ajaxData = NULL;
     public $basketStorage = NULL;
     public $currency = NULL;
+    public $calculateBasket;
+
     protected $errors = [];
     protected $checkSession = false;
 
@@ -156,7 +150,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
                 //'AVAILABLE_FIELDS'=>$this->order->getAvailableFields(), // Список доступных полей
             ];
 
-            $this->arResult['BASE_PRICE'] = $this->basket->getBasePrice(); // Цена без учета скидок
+            $this->arResult['BASE_PRICE'] = ceil($this->basket->getBasePrice()); // Цена без учета скидок
             $this->arResult['QUANTITY_LIST'] = $this->basket->getQuantityList(); // возвращает массив "количеств" товаров в корзине
             //$this->arResult['LIST_OF_FORMAT_TEXT'] = $this->basket->getListOfFormatText(); // возвращает корзину в читаемом виде
 
@@ -179,7 +173,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
                     'FINAL_PRICE' => $items->getFinalPrice(), // стоимость всех единиц позиции товара
                     'PRICE' => $items->getPrice(), // цена с учетом скидок
                     'FORMAT_PRICE' => CurrencyFormat($items->getPrice(), $items->getCurrency()),
-                    'BASE_PRICE' => $items->getBasePrice(), // цена без учета скидок
+                    'BASE_PRICE' => ceil($items->getBasePrice()), // цена без учета скидок
                     'FORMAT_BASE_PRICE' => CurrencyFormat($items->getBasePrice(), $items->getCurrency()),
                     'DEFAULT_PRICE' => $items->getDefaultPrice(), // цена по умолчанию
                     'DISCOUNT_PRICE' => $items->getDiscountPrice(), // величина скидки
@@ -202,6 +196,136 @@ Class CArhicodeBasketSale extends CBitrixComponent
         } catch (Exception $e) {
             $this->errors[] = ['message'=>'getOrderProps', 'error'=>$e->getMessage()];
         }
+    }
+
+    /**
+     * Set basket items data from order object to $this->arResult
+     */
+    protected function obtainBasket()
+    {
+        $arResult =& $this->arResult;
+
+        //$arResult["MAX_DIMENSIONS"] = $arResult["ITEMS_DIMENSIONS"] = array();
+        $arResult["BASKET_ITEMS"] = array();
+
+        $this->calculateBasket = $this->order->getBasket()->createClone();
+
+        $discounts = $this->order->getDiscount();
+        $showPrices = $discounts->getShowPrices();
+        if (!empty($showPrices['BASKET']))
+        {
+            foreach ($showPrices['BASKET'] as $basketCode => $data)
+            {
+                $basketItem = $this->calculateBasket->getItemByBasketCode($basketCode);
+                if ($basketItem instanceof Sale\BasketItemBase)
+                {
+                    $basketItem->setFieldNoDemand('BASE_PRICE', $data['SHOW_BASE_PRICE']);
+                    $basketItem->setFieldNoDemand('PRICE', $data['SHOW_PRICE']);
+                    $basketItem->setFieldNoDemand('DISCOUNT_PRICE', $data['SHOW_DISCOUNT']);
+                }
+            }
+        }
+        unset($showPrices);
+
+        /** @var Sale\BasketItem $basketItem */
+        foreach ($this->calculateBasket as $basketItem)
+        {
+            $arBasketItem = $basketItem->getFieldValues();
+            if ($basketItem->getVatRate() > 0)
+            {
+                $arResult["bUsingVat"] = "Y";
+                $arBasketItem["VAT_VALUE"] = $basketItem->getVat();
+            }
+            $arBasketItem["QUANTITY"] = $basketItem->getQuantity();
+            $arBasketItem["PRICE_FORMATED"] = SaleFormatCurrency($basketItem->getPrice(), $this->order->getCurrency());
+            $arBasketItem["WEIGHT_FORMATED"] = roundEx(doubleval($basketItem->getWeight()/$arResult["WEIGHT_KOEF"]), SALE_WEIGHT_PRECISION)." ".$arResult["WEIGHT_UNIT"];
+            $arBasketItem["DISCOUNT_PRICE"] = $basketItem->getDiscountPrice();
+
+            $arBasketItem["DISCOUNT_PRICE_PERCENT"] = 0;
+            if ($arBasketItem['CUSTOM_PRICE'] != 'Y')
+            {
+                $arBasketItem['DISCOUNT_PRICE_PERCENT'] = Sale\Discount::calculateDiscountPercent(
+                    $arBasketItem['BASE_PRICE'],
+                    $arBasketItem['DISCOUNT_PRICE']
+                );
+                if ($arBasketItem['DISCOUNT_PRICE_PERCENT'] === null)
+                    $arBasketItem['DISCOUNT_PRICE_PERCENT'] = 0;
+            }
+            $arBasketItem["DISCOUNT_PRICE_PERCENT_FORMATED"] = $arBasketItem['DISCOUNT_PRICE_PERCENT'].'%';
+
+            $arBasketItem["BASE_PRICE_FORMATED"] = SaleFormatCurrency($basketItem->getBasePrice(), $this->order->getCurrency());
+
+            /*$arDim = $basketItem->getField('DIMENSIONS');
+
+            if (is_string($arDim))
+            {
+                $arDim = unserialize($basketItem->getField('DIMENSIONS'));
+            }
+
+            if (is_array($arDim))
+            {
+                $arResult["MAX_DIMENSIONS"] = CSaleDeliveryHelper::getMaxDimensions(
+                    array(
+                        $arDim["WIDTH"],
+                        $arDim["HEIGHT"],
+                        $arDim["LENGTH"]
+                    ),
+                    $arResult["MAX_DIMENSIONS"]);
+
+                $arResult["ITEMS_DIMENSIONS"][] = $arDim;
+            }*/
+
+            $arBasketItem["PROPS"] = array();
+            /** @var Sale\BasketPropertiesCollection $propertyCollection */
+            $propertyCollection = $basketItem->getPropertyCollection();
+            $propList = $propertyCollection->getPropertyValues();
+            foreach ($propList as $key => &$prop)
+            {
+                if ($prop['CODE'] == 'CATALOG.XML_ID' || $prop['CODE'] == 'PRODUCT.XML_ID' || $prop['CODE'] == 'SUM_OF_CHARGE')
+                    continue;
+
+                $prop = array_filter($prop, array("CSaleBasketHelper", "filterFields"));
+                $arBasketItem["PROPS"][] = $prop;
+            }
+
+            $this->arElementId[] = $arBasketItem["PRODUCT_ID"];
+            $arBasketItem["SUM_NUM"] = $basketItem->getPrice() * $basketItem->getQuantity();
+            $arBasketItem["SUM"] = SaleFormatCurrency($basketItem->getPrice() * $basketItem->getQuantity(), $this->order->getCurrency());
+            $arBasketItem["SUM_BASE"] = $basketItem->getBasePrice() * $basketItem->getQuantity();
+            $arBasketItem["SUM_BASE_FORMATED"] = SaleFormatCurrency($basketItem->getBasePrice() * $basketItem->getQuantity(), $this->order->getCurrency());
+
+            $arResult["BASKET_ITEMS"][] = $arBasketItem;
+        }
+    }
+
+    /**
+     * Set order total prices data from order object to $this->arResult
+     */
+    protected function obtainTotal()
+    {
+        $arResult =& $this->arResult;
+
+        $basket = $this->calculateBasket;
+
+        $arResult['ORDER_PRICE'] = $basket->getPrice();
+        $arResult['ORDER_PRICE_FORMATED'] = SaleFormatCurrency($arResult['ORDER_PRICE'], $this->order->getCurrency());
+
+        //$arResult['ORDER_WEIGHT'] = $basket->getWeight();
+        //$arResult['ORDER_WEIGHT_FORMATED'] = roundEx(floatval($arResult['ORDER_WEIGHT'] / $arResult['WEIGHT_KOEF']), SALE_WEIGHT_PRECISION).' '.$arResult['WEIGHT_UNIT'];
+
+        $arResult['PRICE_WITHOUT_DISCOUNT_VALUE'] = $basket->getBasePrice();
+        $arResult['PRICE_WITHOUT_DISCOUNT'] = SaleFormatCurrency($arResult['PRICE_WITHOUT_DISCOUNT_VALUE'], $this->order->getCurrency());
+
+        $arResult['DISCOUNT_PRICE'] = Sale\PriceMaths::roundPrecision(
+            $this->order->getDiscountPrice() + ($arResult['PRICE_WITHOUT_DISCOUNT_VALUE'] - $arResult['ORDER_PRICE'])
+        );
+        $arResult['DISCOUNT_PRICE_FORMATED'] = SaleFormatCurrency($arResult['DISCOUNT_PRICE'], $this->order->getCurrency());
+
+        $arResult['DELIVERY_PRICE'] = Sale\PriceMaths::roundPrecision($this->order->getDeliveryPrice());
+        $arResult['DELIVERY_PRICE_FORMATED'] = SaleFormatCurrency($arResult['DELIVERY_PRICE'], $this->order->getCurrency());
+
+        $arResult['ORDER_TOTAL_PRICE'] = Sale\PriceMaths::roundPrecision($this->order->getPrice());
+        $arResult['ORDER_TOTAL_PRICE_FORMATED'] = SaleFormatCurrency($arResult['ORDER_TOTAL_PRICE'], $this->order->getCurrency());
     }
 
     /**
@@ -413,6 +537,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
             $this->getOrderProps(); // збираємо основні властивості кошика і товарів
             $this->getSalePaySystem(); // доступні системи оплати
             $this->getSaleDelivery(); // отримати доступні доставки
+            $this->obtainBasket();
+            $this->obtainTotal();
         } catch (Exception $e) {
             $this->arResult['errors'] = ['error'=>'processOrderAction', 'message'=>$e->getMessage()];
         }
@@ -501,6 +627,10 @@ Class CArhicodeBasketSale extends CBitrixComponent
                     $ajaxData['ERROR'] = 'N';
                     $ajaxData['DATA']['QUANTITY_NEW'] = $basketItem->getQuantity();
                     $ajaxData['DATA']['BASE_PRICE'] = round($basket->getBasePrice(),2);
+
+                    //$ajaxData['DATA']['ORDER_PRICE'] = $basket->getPrice();
+                    ///$arResult['DATA']['ORDER_PRICE_FORMATED'] = SaleFormatCurrency($arResult['DATA']['ORDER_PRICE'], $this->order->getCurrency());
+
                     $ajaxData['DATA']['FORMATED_BASE_PRICE'] = CurrencyFormat($basket->getBasePrice(), $this->currency);
                     $ajaxData['DATA']['PRICE_DISCOUNT'] = $this->calculateBasketTotalDiscountPrice($basket);
                 }
@@ -516,6 +646,9 @@ Class CArhicodeBasketSale extends CBitrixComponent
     }
 
 
+    /**
+     * Оформлюємо замовлення
+     */
     public function makeCurrentOrderAction()
     {
         $ajaxData = [
@@ -545,6 +678,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
         // перкладаємо товари з кошику в доставку
         $this->initShipment($this->order);
 
+        $this->order->doFinalAction(true); // Метод выполняет расчет скидок, налогов и применяет их к заказу.
+
 
         // Властивості замовлення
         $propertyCollection = $this->order->getPropertyCollection();
@@ -561,14 +696,6 @@ Class CArhicodeBasketSale extends CBitrixComponent
         // Оплата
         $paymentCollection = $this->order->getPaymentCollection();
         $payment = $paymentCollection->createItem(PaySystem\Manager::getObjectById($paySystemId));
-        /*$payment = $paymentCollection->createItem();
-        $paySystemService = PaySystem\Manager::getObjectById($paySystemId);
-        $payment->setFields(array(
-            'PAY_SYSTEM_ID' => $paySystemService->getField("PAY_SYSTEM_ID"),
-            'PAY_SYSTEM_NAME' => $paySystemService->getField("NAME"),
-        ));*/
-
-        //$payment->setField("SUM", $this->order->getPrice());
         $payment->setField("SUM", $this->order->getPrice());
         $payment->setField("CURRENCY", $this->order->getCurrency());
 
@@ -578,102 +705,24 @@ Class CArhicodeBasketSale extends CBitrixComponent
         {
             $ajaxData['ORDER_ID'] =  $this->order->getId();
             $ajaxData['ERROR'] = 'N';
+            $this->showOrderAction($ajaxData);
         }
         else
         {
             $ajaxData['ERROR'] = $result->getErrors();
+            $this->sendAjaxAnswer($ajaxData);
         }
-
-        $this->sendAjaxAnswer($ajaxData);
     }
 
-
-    public function makeCurrentOrderAction_Test()
-    {
-        try {
-            $ajaxData = [
-                'ACTION' => 'makeCurrentOrder',
-            ];
-            $name = trim($this->request->get('userName'));
-            $phone = trim($this->request->get('userPhone'));
-            $phone = preg_replace("/[^0-9]/", "", $phone);
-            $email = trim($this->request->get('userEmail'));
-            $paySystemId = (int)$this->request->get('userPaySystemId');
-            $address = trim($this->request->get('userAddress'));
-            $totalPrice = floatval($this->request->get('totalPrice'));
-
-
-            // Кошик
-            $this->createVirtualOrder();
-            /* @var $shipmentCollection \Bitrix\Sale\ShipmentCollection */
-            $shipmentCollection = $this->order->getShipmentCollection();
-
-            if (intval($this->request['delivery_id']) > 0) {
-                $shipment = $shipmentCollection->createItem(
-                    Bitrix\Sale\Delivery\Services\Manager::getObjectById(
-                        intval($this->request['delivery_id'])
-                    )
-                );
-            } else {
-                $shipment = $shipmentCollection->createItem(
-                    Bitrix\Sale\Delivery\Services\Manager::getObjectById(1)
-                );
-            }
-            /** @var $shipmentItemCollection \Bitrix\Sale\ShipmentItemCollection */
-            $shipmentItemCollection = $shipment->getShipmentItemCollection();
-            $shipment->setField('CURRENCY', $this->order->getCurrency());
-
-            foreach ($this->order->getBasket()->getOrderableItems() as $item) {
-                /**
-                 * @var $item \Bitrix\Sale\BasketItem
-                 * @var $shipmentItem \Bitrix\Sale\ShipmentItem
-                 * @var $item \Bitrix\Sale\BasketItem
-                 */
-                $shipmentItem = $shipmentItemCollection->createItem($item);
-                $shipmentItem->setQuantity($item->getQuantity());
-            }
-
-            // Властивості замовлення
-            $propertyCollection = $this->order->getPropertyCollection();
-            $nameProp = $propertyCollection->getPayerName();
-            $nameProp->setValue($name);
-            $phoneProp = $propertyCollection->getPhone();
-            $phoneProp->setValue($phone);
-            $emailProp = $propertyCollection->getUserEmail();
-            $emailProp->setValue($email);
-            $addressProp = $propertyCollection->getAddress();
-            $addressProp->setValue($address);
-
-            // Оплата
-            $paymentCollection = $this->order->getPaymentCollection();
-            $payment = $paymentCollection->createItem(PaySystem\Manager::getObjectById($paySystemId));
-            $payment->setField("SUM", $this->order->getPrice());
-            $payment->setField("CURRENCY", $this->order->getCurrency());
-
-
-            $result = $this->order->save();
-            if ($result->isSuccess())
-            {
-                $ajaxData['ORDER_ID'] =  $this->order->getId();
-                $ajaxData['ERROR'] = 'N';
-            }
-            else
-            {
-                $ajaxData['ERROR'] = $result->getErrors();
-            }
-
-        } catch (\Exception $e) {
-            $ajaxData['ERROR'] = $e->getMessage();
-        }
-        $this->sendAjaxAnswer($ajaxData);
-    }
-
-
+    /**
+     * Метод перекладає всі товари з кошика в замовлення
+     */
     public function initShipment($order)
     {
+        $delivertId = 1; // id доставки
         $shipmentCollection = $order->getShipmentCollection();
         $shipment = $shipmentCollection->createItem(
-            Bitrix\Sale\Delivery\Services\Manager::getObjectById(1)         // доставка
+            Bitrix\Sale\Delivery\Services\Manager::getObjectById($delivertId)
         );
         $shipmentItemCollection = $shipment->getShipmentItemCollection();
         $shipment->setField('CURRENCY', $order->getCurrency());
@@ -713,7 +762,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
     }
 
     /**
-     * Append basket(for current FUser) to order object
+     * Додаємо кошик (до поточного FUser) to order object
      *
      * @param Order $order
      * @throws Main\ObjectNotFoundException
@@ -727,7 +776,6 @@ Class CArhicodeBasketSale extends CBitrixComponent
         {
             $this->basket->save();
         }
-
         // right NOW we decide to work only with available basket
         // full basket won't update anymore
         $availableBasket = $basketStorage->getOrderableBasket();
@@ -790,6 +838,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
         if (empty($discountResult['PRICES']['BASKET']))
             return 0;
         $result = 0;
+        $resultBase = 0;
         $discountResult = $discountResult['PRICES']['BASKET'];
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem)
@@ -797,16 +846,19 @@ Class CArhicodeBasketSale extends CBitrixComponent
             if (!$basketItem->canBuy())
                 continue;
             $code = $basketItem->getBasketCode();
-            if (!empty($discountResult[$code]))
+            if (!empty($discountResult[$code])) {
                 $result += $discountResult[$code]['PRICE'] * $basketItem->getQuantity();
+                $resultBase += ceil($discountResult[$code]['BASE_PRICE']) * $basketItem->getQuantity();
+            }
             unset($code);
         }
         unset($basketItem);
 
         return [
             'FULL_DISCOUNT_PRICE'=>round($result,2),
+            'FULL_PRICE_BASE'=>round($resultBase,2),
             'FULL_DISCOUNT_PRICE_FORMAT'=>CurrencyFormat(round($result,2), $this->currency),
-            'DISCOUNT_PRICE_LIST'=>$discountResult
+            'DISCOUNT_PRICE_LIST'=>$discountResult,
         ];
     }
 
@@ -897,22 +949,13 @@ Class CArhicodeBasketSale extends CBitrixComponent
     /**
      * Виводимо результат оформлення замовлення
      */
-    public function showOrderAction()
+    public function showOrderAction($ajaxData)
     {
-        if(isset($this->request['d']) && $this->request['d'] == 'Y')
-        {
-            $shipmentCollection = $this->order->getShipmentCollection();
-            $shipment = $shipmentCollection->createItem();
-            $shipment->setFields(array(
-                'DELIVERY_ID' => 2,
-                'DELIVERY_NAME' => 'Доставка курьером',
-            ));
-            // Сохраняем
-            //$this->order->doFinalAction(true);
-            //$this->order->save();
-            //$this->order->getId();
-            AddMessage2Log("executeComponent: ".$this->order->getId(), "ArhicodeBasketSale");
-        }
+        $user = CSaleOrder::GetByID($ajaxData['ORDER_ID']);
+        $ajaxData['ORDER'] = [
+            'PRICE'=>$user['PRICE'],
+        ];
+        $this->sendAjaxAnswer($ajaxData);
     }
 
     /**

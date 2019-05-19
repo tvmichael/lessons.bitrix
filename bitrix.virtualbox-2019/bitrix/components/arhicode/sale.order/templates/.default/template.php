@@ -8,6 +8,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
  * @var SaleOrder $component
  * @var string $templateFolder
  */
+$APPLICATION->SetTitle('Моя корзина');
 
 use Bitrix\Main,
     Bitrix\Main\Localization\Loc;
@@ -37,19 +38,19 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
 <div class="ahc-sale-order">
     <form action="<?=POST_FORM_ACTION_URI;?>" method="POST" name="<?=$arrId['formId'];?>" id="<?=$arrId['formId'];?>" enctype="multipart/form-data">
         <div class="ahc-nav-steps">
-            <div class="ahc-step-btn">
+            <div class="ahc-step-btn ahc-step-btn-1 current-step">
                 <span>1</span>
                 Корзина
             </div>
-            <div class="ahc-step-btn">
+            <div class="ahc-step-btn ahc-step-btn-2">
                 <span>2</span>
                 Контактная информация
             </div>
-            <div class="ahc-step-btn">
+            <div class="ahc-step-btn ahc-step-btn-3">
                 <span>3</span>
                 Доставка и оплата
             </div>
-            <div class="ahc-step-btn">
+            <div class="ahc-step-btn ahc-step-btn-4">
                 <span>4</span>
                 Подтверждение
             </div>
@@ -57,6 +58,8 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
         </div>
 
         <div class="ahc-panels">
+
+            <!-- LEFT PANEL -->
             <div class="ahc-panel-left">
                 <div class="ahc-panel-1">
                     <h3>Ваш заказ</h3>
@@ -141,20 +144,26 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                             <label>Email:</label>
                             <span data-id="email"></span>
                         </div>
-                        <div>
+                        <div class="ahc-address">
                             <label>Адрес доставки:</label>
                             <textarea></textarea>
                         </div>
                         <div class="ahc-pay-system">
+                            <label>Способ оплаты:</label>
                             <fieldset id="group-pay">
-                                <? foreach ($arResult['PAY_SYSTEM'] as $item):
+                                <?
+                                $i = true;
+                                foreach ($arResult['PAY_SYSTEM'] as $item):
                                     if($item['ACTIVE']=='Y'):?>
-                                        <label>
-                                            <?=$item['NAME'];?>
-                                            <input type="radio" value="<?=$item['ID'];?>" name="group-pay" data-name="<?=$item['NAME'];?>">
-                                        </label>
-                                        <div><?=$item['DESCRIPTION'];?></div>
-                                    <? endif;
+                                        <div>
+                                            <label>
+                                                <?=$item['NAME'];?>
+                                                <input type="radio" value="<?=$item['ID'];?>" name="group-pay" data-name="<?=$item['NAME'];?>" <?=$i?'checked':'';?>>
+                                            </label>
+                                            <span><?=$item['DESCRIPTION'];?></span>
+                                        </div>
+                                        <? $i = false;
+                                    endif;
                                 endforeach;?>
                             </fieldset>
                         </div>
@@ -188,21 +197,21 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                 </div>
                 <div class="block-separator"></div>
             </div>
+
+            <!-- RIGHT PANEL -->
             <div class='ahc-panel-right'>
                 <div class="ahc-total-info">
                     <div>
                         <div class="ahc-base-price">Стоимость без скидки
-                            <span id="<?=$arrId['basePrice'];?>"><?=CurrencyFormat($arResult['BASE_PRICE'],$arResult['ORDER']['CURRENCY']);?></span>
+                            <span id="<?=$arrId['basePrice'];?>"><?=$arResult['PRICE_WITHOUT_DISCOUNT'];?></span>
                         </div>
-                        <? $discount = $arResult['BASE_PRICE'] - $arResult['ORDER']['PRICE'];
-                        if($discount <= 0) $discount = 0; ?>
                         <div class="ahc-discount">Скидка
-                            <span id="<?=$arrId['discount'];?>"><?=CurrencyFormat($discount, $arResult['ORDER']['CURRENCY']);?></span>
+                            <span id="<?=$arrId['discount'];?>"><?=$arResult['DISCOUNT_PRICE_FORMATED'];?></span>
                         </div>
                     </div>
                     <div class="ahc-total-price">
                         Сума заказа
-                        <span id="<?=$arrId['totalPrice'];?>"><?=CurrencyFormat($arResult['ORDER']['PRICE'], $arResult['ORDER']['CURRENCY']);?></span>
+                        <span id="<?=$arrId['totalPrice'];?>"><?=$arResult['ORDER_PRICE_FORMATED'];?></span>
                     </div>
                     <div class="ahc-btn-step" id="<?=$arrId['buttonStep'];?>" data-step="1">
                         Оформить заказ
@@ -215,20 +224,35 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                 </div>
 
                 <div class="ahc-allow-order">
-                    <div>
-                        <label>
-                            <input id="<?=$arrId['allowOrder'];?>" type="checkbox">
-                            Согласие на обработку персональных данных
-                        </label>
-                        <span>* Эти поля обязательны для заполнения</span>
-                    </div>
+                    <label>
+                        <input id="<?=$arrId['allowOrder'];?>" type="checkbox">
+                        Согласие на обработку персональных данных
+                    </label>
+                    <span>* Эти поля обязательны для заполнения</span>
                 </div>
 
-                <div class="ahc-back">Вернуться назад</div>
+                <div class="ahc-back">Вернуться в корзину</div>
             </div>
+
         </div>
         <div class="block-separator"></div>
     </form>
+
+    <div class="bascket-empty">Ваша корзина пуста</div>
+
+    <div class="order-executed">
+        <h2>Спасибо за покупку</h2>
+        <p>В ближайшее время с вами свяжеться наш специалист для уточнения условий доставки.</p>
+        <div id="order-executed">
+            <label>Номер заказа: №<span id="oe-number"></span></label>
+            <label>Сумма заказа: <span id="oe-sum"></span></label>
+            <label>Имя: <span id="oe-name"></span></label>
+            <label>Телефон: <span id="oe-phone"></span></label>
+            <label>Email: <span id="oe-email"></span></label>
+            <label>Адрес доставки: <span id="oe-address"></span></label>
+            <label>Способ оплаты: <span id="oe-pay"></span></label>
+        </div>
+    </div>
 </div>
 
 <?
@@ -255,24 +279,21 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 
 
-<!-- ---------------------------------------------------------- -->
-<hr>
-<div>
+<hr style="padding-top: 20px">
+<div style="">
     <h2>SALE</h2>
     <pre>
     <?php
-        echo 'PARAMS:<br>';
-        print_r($arParams);
-        echo '<br>';
-        print_r($signedParams);
-        print_r($messages);
-        echo '<hr>';
-        echo 'RESULT:<br>';
-        print_r($arResult);
-        //echo $templateFolder.'<br>';
-        //echo SITE_TEMPLATE_PATH;
+    echo 'PARAMS:<br>';
+    print_r($arParams);
+    echo '<br>';
+    print_r($signedParams);
+    print_r($messages);
+    echo '<hr>';
+    echo 'RESULT:<br>';
+    print_r($arResult);
+    //echo $templateFolder.'<br>';
+    //echo SITE_TEMPLATE_PATH;
     ?>
     </pre>
 </div>
-
-

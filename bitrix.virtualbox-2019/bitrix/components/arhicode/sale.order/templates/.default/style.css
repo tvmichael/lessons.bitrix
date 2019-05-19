@@ -1,19 +1,42 @@
-
-/* NAV */
-.ahc-sale-order .ahc-nav-steps{
-    width: 80%;
+.ahc-sale-order {
+    width: 900px;
     margin: 0px auto;
+}
+
+/* --- NAV PANEL ---------------------------------------------------------------------------------------------------- */
+.ahc-sale-order .ahc-nav-steps{
     padding-bottom: 30px;
 }
 
-.ahc-sale-order .ahc-step-btn {
+.ahc-nav-steps .ahc-step-btn {
     position: relative;
     float: left;
     width: 25%;
     text-align: center;
 }
-
-.ahc-sale-order .ahc-step-btn span{
+.ahc-nav-steps .ahc-step-btn:after {
+    content: ' ';
+    display: block;
+    position: absolute;
+    height: 2px;
+    top: 30%;
+    background-color: #ddd;
+}
+.ahc-nav-steps .ahc-step-btn-1:after {
+    width: 40%;
+    right: 0px;
+}
+.ahc-nav-steps .ahc-step-btn-2:after {
+    width: 100%;
+}
+.ahc-nav-steps .ahc-step-btn-3:after {
+    width: 100%;
+}
+.ahc-nav-steps .ahc-step-btn-4:after {
+    width: 40%;
+    left: 0px;
+}
+.ahc-nav-steps .ahc-step-btn span{
     display: block;
     width: 35px;
     height: 35px;
@@ -21,125 +44,58 @@
     border-radius: 50%;
     text-align: center;
     font-size: 22px;
-    padding-top: 2px;
+    padding-top: 6px;
     position: relative;
+    background-color: white;
     left: 50%;
     transform: translateX(-50%);
     box-sizing: border-box;
+    z-index: 2;
 }
-.ahc-sale-order .active-step span{
-    font-weight: bold;
-    border: 1px solid green;
+.ahc-nav-steps .active-step {
+    color: #72bb53;
 }
-.ahc-sale-order .current-step span{
+.ahc-nav-steps .active-step span{
+    border: 1px solid #72bb53;
     cursor: pointer;
 }
+.ahc-nav-steps .current-step {
+    color: black;
+    font-weight: bold;
+}
+.ahc-nav-steps .current-step span{
+    border: 1px solid black;
+}
 
-/* PANELS */
+
+/* --- PANEL -------------------------------------------------------------------------------------------------------- */
 .ahc-sale-order .ahc-panels{
     position: relative;
-    min-height: 300px;
+    min-height: 350px;
 }
+
+
+/* --- LEFT PANEL --- */
 .ahc-sale-order .ahc-panel-left{
     padding-right: 300px;
 }
-.ahc-sale-order .ahc-panel-right{
-    width: 300px;
-    position: absolute;
-    top: 0px;
-    right: 0px;
-}
-.ahc-sale-order .ahc-price{
-    padding-bottom: 20px;
-}
-.ahc-sale-order .ahc-base-price{
-    padding-bottom: 10px;
-    position: relative;
-}
-.ahc-sale-order .ahc-base-price span{
-    display: inline-block;
-    position: absolute;
-    right: 0px;
-}
-.ahc-sale-order .ahc-discount{
-    padding-bottom: 10px;
-    position: relative;
-}
-.ahc-sale-order .ahc-discount span{
-    display: inline-block;
-    position: absolute;
-    right: 0px;
-}
-.ahc-sale-order .ahc-total-price{
-    position: relative;
-    padding: 10px 0px;
-    border-top: 1px solid gray;
-}
-.ahc-sale-order .ahc-total-price span{
-    display: inline-block;
-    position: absolute;
-    right: 0px;
-}
-.ahc-sale-order .ahc-btn-step{
-    padding: 5px;
-    text-align: center;
-    color: white;
-    background-color: #72bb53;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.ahc-sale-order .ahc-total-info{
-    padding: 20px;
-    border: 1px solid #acacac;
-}
-.ahc-sale-order .ahc-allow-order{
-    display: none;
-}
-.ahc-sale-order .ahc-back{
-    display: none;
-    text-align: right;
-    cursor: pointer;
-    text-decoration: underline;
-    font-size: 13px;
-    padding-top: 15px;
-}
-.ahc-sale-order .ahc-swift-order{
-    padding: 20px 0px;
-}
-.ahc-sale-order .ahc-swift-order > div{
-    padding: 7px;
-    text-align: center;
-    border: 1px solid gray;
-    cursor: pointer;
-}
-.ahc-sale-order .ahc-swift-order p{
-    padding-top: 15px;
-    color: rgb(170, 170, 170);
-    font-size: 12px;
-}
-.ahc-sale-order .ahc-allow-order{
-    padding-top: 20px;
-    font-size: 12px;
-}
-.ahc-sale-order .ahc-allow-order label{
-    font-weight: normal;
-}
 
 /* --- ahc-panel-2,3,4 --- */
-.ahc-sale-order .ahc-panel-2,
-.ahc-sale-order .ahc-panel-3,
-.ahc-sale-order .ahc-panel-4 {
+.ahc-panel-left .ahc-panel-2,
+.ahc-panel-left .ahc-panel-3,
+.ahc-panel-left .ahc-panel-4 {
     display: none;
+    padding-left: 20px;
 }
 
-.ahc-sale-order .ahc-panel-1 h3{
+/* panel 1 */
+.ahc-panel-left .ahc-panel-1 h3{
     font-size: 22px;
     padding-bottom: 20px;
     margin: 0px;
 }
 .ahc-panel-1 .ahc-product-panel{
-    margin-top: 15px;
+    margin-top: 20px;
 }
 .ahc-panel-1 .ahc-product{
     position: relative;
@@ -154,10 +110,12 @@
     overflow: hidden;
 }
 .ahc-panel-1 .ahc-product .ahc-product-info{
-    padding-left: 160px;
+    padding-left: 150px;
 }
 .ahc-panel-1 .ahc-product .ahc-product-info > a{
+    display: inline-block;
     font-size: 18px;
+    padding-right: 30px;
     color: #515151;
 }
 .ahc-panel-1 .ahc-product-delete{
@@ -171,10 +129,14 @@
 .ahc-panel-1 .ahc-product-quantity{
     float: left;
     width: 40%;
+    text-align: center;
 }
 .ahc-panel-1 .ahc-product-price{
     float: left;
     width: 40%;
+}
+.ahc-panel-1 .ahc-product-price>div{
+    padding-left: 40px;
 }
 .ahc-panel-1 .ahc-quantity{
     width: 40px;
@@ -182,25 +144,55 @@
     padding: 5px;
     text-align: center;
 }
+.ahc-panel-1 .ahc-price{
+    padding-bottom: 20px;
+    text-decoration: line-through;
+}
+.ahc-panel-1 .ahc-price-discount{
+    color: black;
+}
 
+/* panel 2 */
 .ahc-panel-2 .ahc-user-info > div{
-    padding-top: 15px;
+    padding-bottom: 20px;
 }
 .ahc-panel-2 .ahc-user-info label{
     font-weight: normal;
     display: block;
+    color: black;
+    padding-bottom: 5px;
 }
 .ahc-panel-2 .ahc-user-info input{
-    width: 300px;
-    padding: 5px 10px;
+    width: 350px;
+    padding: 7px 10px;
     background-color: white;
+    font-size: 14px;
+    color: #777;
 }
 
+/* panel 3 */
+.ahc-panel-3 .ahc-delivery{
+    font-size: 14px;
+}
+.ahc-panel-3 .ahc-delivery > div{
+    padding-bottom: 7px;
+}
 .ahc-panel-3 .ahc-delivery label{
+    padding-right: 5px;
     font-weight: normal;
 }
+.ahc-panel-3 .ahc-delivery span{
+    color: black;
+}
+.ahc-panel-3 .ahc-delivery .ahc-address label{
+    display: block;
+    color: black;
+    font-weight: bold;
+    padding-top: 10px;
+    padding-bottom: 8px;
+}
 .ahc-panel-3 .ahc-delivery textarea{
-    min-height: 70px;
+    min-height: 80px;
     min-width: 100px;
     width: 400px;
     background-color: white;
@@ -211,6 +203,52 @@
 .ahc-panel-3 .ahc-pay-system{
     padding-top: 15px;
 }
+.ahc-panel-3 .ahc-pay-system > label{
+    display: block;
+    color: black;
+    font-weight: bold;
+    padding-bottom: 5px;
+}
+.ahc-panel-3 .ahc-pay-system fieldset{
+    border: none;
+}
+.ahc-panel-3 .ahc-pay-system fieldset div{
+    position: relative;
+    padding-bottom: 10px;
+}
+.ahc-panel-3 .ahc-pay-system fieldset label{
+    padding-left: 25px;
+    color: #383838;
+    cursor: pointer;
+}
+.ahc-panel-3 .ahc-pay-system fieldset span{
+    display: block;
+    padding-left: 25px;
+    color: #888;
+    font-size: 12px;
+    padding-top: 2px;
+}
+.ahc-panel-3 .ahc-pay-system fieldset input{
+    position: absolute;
+    left: 0px;
+    top: 4px;
+    width: 15px;
+    height: 15px;
+}
+
+/* panel 4 */
+.ahc-panel-4 .ahc-confirm-order > div{
+    font-size: 14px;
+    padding-bottom: 10px;
+}
+.ahc-panel-4 .ahc-confirm-order label{
+    padding-right: 5px;
+    font-weight: normal;
+}
+.ahc-panel-4 .ahc-confirm-order span{
+    color: black;
+}
+
 
 /* IMAGE */
 .ahc-sale-order .ahc-product-img{
@@ -221,18 +259,154 @@
 }
 
 /* BUTTON */
-.ahc-sale-order .ahc-minus, .ahc-sale-order .ahc-plus{
+.ahc-sale-order .ahc-minus,
+.ahc-sale-order .ahc-plus{
     display: inline-block;
-    width: 20px;
+    width: 25px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     text-align: center;
+    height: 25px;
+    vertical-align: top;
 }
-.ahc-sale-order .ahc-minus:hover, .ahc-sale-order .ahc-plus:hover{
+.ahc-sale-order .ahc-minus:hover,
+.ahc-sale-order .ahc-plus:hover{
     background-color: #e6e6e6;
 }
 
+
+/* --- RIGHT PANEL --- */
+.ahc-sale-order .ahc-panel-right{
+    width: 300px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+.ahc-panel-right .ahc-total-info{
+    padding: 20px;
+    border: 1px solid #acacac;
+}
+.ahc-panel-right .ahc-back{
+    display: none;
+    text-align: right;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 13px;
+    padding-top: 15px;
+}
+.ahc-panel-right .ahc-swift-order{
+    padding: 20px 0px;
+}
+.ahc-panel-right .ahc-base-price{
+    padding-bottom: 10px;
+    position: relative;
+}
+.ahc-panel-right .ahc-base-price span{
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+.ahc-panel-right .ahc-swift-order > div{
+    padding: 7px;
+    text-align: center;
+    border: 1px solid gray;
+    cursor: pointer;
+}
+.ahc-panel-right .ahc-swift-order p{
+    padding-top: 15px;
+    color: rgb(170, 170, 170);
+    font-size: 12px;
+}
+.ahc-panel-right .ahc-allow-order{
+    display: none;
+    padding-top: 20px;
+    font-size: 12px;
+}
+.ahc-panel-right .ahc-allow-order label{
+    display: block;
+    font-weight: normal;
+    padding-bottom: 10px;
+    color: #383838;
+    cursor: pointer;
+    text-decoration: underline;
+}
+.ahc-panel-right .ahc-allow-order input{
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+}
+.ahc-panel-right .ahc-discount{
+    padding-bottom: 10px;
+    position: relative;
+}
+.ahc-panel-right .ahc-discount span{
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+.ahc-panel-right .ahc-total-price{
+    position: relative;
+    padding: 12px 0px 20px;
+    border-top: 1px solid gray;
+    font-size: 14px;
+    color: black;
+}
+.ahc-panel-right .ahc-total-price span{
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+.ahc-panel-right .ahc-btn-step{
+    padding: 7px;
+    text-align: center;
+    color: white;
+    background-color: #72bb53;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* --- OTHER STYLE -------------------------------------------------------------------------------------------------- */
+.wrapper_inner .container .h1-title-block{
+    display: block;
+}
+.wrapper_inner .container .page-title-main{
+    text-align: center;
+    padding-right: 0px;
+}
+
+.ahc-sale-order .bascket-empty{
+    display: none;
+    font-size: 18px;
+    padding: 20px 0px;
+    color: red;
+}
+/* order is executed */
+.ahc-sale-order .order-executed{
+    display: none;
+    padding-bottom: 20px;
+}
+.ahc-sale-order .order-executed h2 {
+    color: #72bb53;
+}
+.ahc-sale-order .order-executed p {
+    font-size: 16px;
+}
+.ahc-sale-order .order-executed label {
+    display: block;
+    padding-bottom: 5px;
+    font-size: 14px;
+    font-weight: normal;
+}
+.ahc-sale-order .order-executed label:first-child{
+    font-weight: bold;
+    color: #777;
+    font-size: 16px;
+}
+.ahc-sale-order .order-executed span {
+    color: black;
+}
 
 
 .block-separator{
