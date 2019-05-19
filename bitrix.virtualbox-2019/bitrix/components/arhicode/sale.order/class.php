@@ -2,7 +2,7 @@
 /**
  * Class.php - это зарезервированное имя файла, и этот файл автоматически подключается при вызове:
  * $APPLICATION->IncludeComponent()
-*/
+ */
 define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/test/log.txt");
 //AddMessage2Log("onPrepareComponentParams", "ArhicodeBasketSale");
 
@@ -13,13 +13,19 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Discount;
+use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Fuser;
+use Bitrix\Sale\PaySystem;
+
 use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Context;
+
+use Bitrix\Main\Diag\Debug;
 
 
 Class CArhicodeBasketSale extends CBitrixComponent
@@ -30,9 +36,11 @@ Class CArhicodeBasketSale extends CBitrixComponent
     public $order;
     public $basket;
     public $context;
+    public $userId = NULL;
+    public $fUserId = NULL;
     public $ajaxData = NULL;
     public $basketStorage = NULL;
-
+    public $currency = NULL;
     protected $errors = [];
     protected $checkSession = false;
 
@@ -88,18 +96,18 @@ Class CArhicodeBasketSale extends CBitrixComponent
      */
     protected function createVirtualOrder()
     {
+        global $USER;
         try
         {
             $siteId = Context::getCurrent()->getSite(); // імя сайта
-            //$userId = $USER->GetID() ? $USER->GetID() : CSaleUser::GetAnonymousUserID();
-            $userId = Fuser::getId(); // ід - поточного користувача
-            $basket = Basket::loadItemsForFUser($userId, $siteId);
+            $this->fUserId = $this->getFuserId();
+            $basket = Basket::loadItemsForFUser($this->fUserId, $siteId);
 
             if(count($basket->getOrderableItems()) == 0) // якщо кошик пустий перехід на головну сторінку сайта, або на вказану в налаштуванні
                 LocalRedirect('/personal/cart/'); // TODO - доробити, якщо кошик пустий
 
             // створюємо віртуальний заказ
-            $this->order = Order::create($siteId, $userId);
+            $this->order = Order::create($siteId, $this->fUserId);
             $this->order->setPersonTypeId($this->arParams['PERSON_TYPE_ID']);
             // приєднеємо до заказу поточний кошик
             $this->order->setBasket($basket);
@@ -113,55 +121,16 @@ Class CArhicodeBasketSale extends CBitrixComponent
     }
 
     /**
-     * Додаємо властивості замовлення
+     * Для получения Внутреннего кода владельца корзины,
+     * (если нужно сделать заказ с существующей корзиной)
      */
-    protected function setOrderProps()
+    protected function getFuserId()
     {
-        global $USER;
-        $arUser = $USER->GetByID(Fuser::getId())->Fetch(); // поточний покупець
-
-        if(is_array($arUser))
+        if ($this->fUserId === null)
         {
-            $fio = $arUser['LAST_NAME'];
+            $this->fUserId = Fuser::getId();
         }
-
-        $this->arResult['props'] = [];
-        foreach ($this->order->getPropertyCollection() as $prop)
-        {
-            $value = '';
-            switch ($prop->getField('CODE')) {
-                case 'FIO':
-                    $value = $this->request['contact']['family'];
-                    $value .= ' ' . $this->request['contact']['name'];
-                    $value .= ' ' . $this->request['contact']['second_name'];
-
-                    $value = trim($value);
-                    if (empty($value)) {
-                        $value = $arUser['FIO'];
-                    }
-                    break;
-
-                default:
-            }
-
-            if (empty($value)) {
-                foreach ($this->request as $key => $val) {
-                    if (strtolower($key) == strtolower($prop->getField('CODE'))) {
-                        $value = $val;
-                    }
-                }
-            }
-
-            if (empty($value)) {
-                $value = $prop->getProperty()['DEFAULT_VALUE'];
-            }
-
-            if (!empty($value)) {
-                $prop->setValue($value);
-
-                //$this->arResult['props'][] = $value;
-            }
-        }
+        return $this->fUserId;
     }
 
     /**
@@ -169,26 +138,27 @@ Class CArhicodeBasketSale extends CBitrixComponent
      */
     protected function getOrderProps()
     {
+        global $USER;
         try {
-            // Дані по кошику покупця
+            // Дані по поточному кошику покупця
             $this->arResult['ORDER'] = [
-                'USER_ID'=>$this->order->getUserId(), // ID пользователя
+                'USER_ID'=>$this->order->getUserId(), // ID користувача(для поточного кошика)
                 'ORDER_ID'=>$this->order->getId(), // ID заказа
                 'SITE_ID'=>$this->order->getSiteId(), // ID сайта
-                'PERSON_TYPE_ID'=>$this->order->getPersonTypeId(), // ID типа покупателя
+                'PERSON_TYPE_ID'=>$this->order->getPersonTypeId(), // ID тип покупця
 
-                'PRICE'=>$this->order->getPrice(),// Цена с учетом скидок
-                'DELIVERY_PRICE'=>$this->order->getDeliveryPrice(), // Стоимость доставки
-                'DISCOUNT_PRICE'=>$this->order->getDiscountPrice(), // Размер скидки
-                'SUM_PAID'=>$this->order->getSumPaid(), // Оплаченная сумма
-                'CURRENCY'=>$this->order->getCurrency(), // Валюта заказа
+                'PRICE'=>$this->order->getPrice(),// Ціна зі знижкою
+                //'DELIVERY_PRICE'=>$this->order->getDeliveryPrice(), // Стоимость доставки
+                //'DISCOUNT_PRICE'=>$this->order->getDiscountPrice(), // Размір знижки
+                //'SUM_PAID'=>$this->order->getSumPaid(), // Оплаченная сумма
+                'CURRENCY'=>$this->order->getCurrency(), // Валюта замовлення
                 //'Fields_#Name#_'=>$this->order->getField('PRICE'), // Также любое поле можно получить по имени
                 //'AVAILABLE_FIELDS'=>$this->order->getAvailableFields(), // Список доступных полей
             ];
 
             $this->arResult['BASE_PRICE'] = $this->basket->getBasePrice(); // Цена без учета скидок
-            //$this->arResult['QUANTITY_LIST'] = $this->basket->getQuantityList(); // возвращает массив "количеств" товаров в корзине
-            $this->arResult['LIST_OF_FORMAT_TEXT'] = $this->basket->getListOfFormatText(); // возвращает корзину в читаемом виде
+            $this->arResult['QUANTITY_LIST'] = $this->basket->getQuantityList(); // возвращает массив "количеств" товаров в корзине
+            //$this->arResult['LIST_OF_FORMAT_TEXT'] = $this->basket->getListOfFormatText(); // возвращает корзину в читаемом виде
 
             // получение объекта корзины и массива товаров в корзине:
             // getBasketItems(); // все товары
@@ -221,10 +191,13 @@ Class CArhicodeBasketSale extends CBitrixComponent
             $this->arResult['PRODUCT_LIST'] = $arr;
             unset($arr);
 
-            $this->arResult['PAYMENT_SYSTEM_ORDER'] = $this->order->getPaymentSystemId(); // массив id способів оплат (в поточному замовленні)
-            $this->arResult['DELIVERY_SYSTEM_ORDER'] = $this->order->getDeliverySystemId(); // массив id способів доставки (в поточному замовленні)
+            //$this->arResult['PAYMENT_SYSTEM_ORDER'] = $this->order->getPaymentSystemId(); // массив id способів оплат (в поточному замовленні)
+            //$this->arResult['DELIVERY_SYSTEM_ORDER'] = $this->order->getDeliverySystemId(); // массив id способів доставки (в поточному замовленні)
+
+            $this->arResult['USER_INFO'] =  $this->getUserInfo();
 
             //$this->arResult['DISCOUNT_APPLY_ORDER'] = $this->order->getDiscount()->getApplyResult(); // список застосованих до замавлення знижок
+            //$this->arResult['DISCOUNT_APPLY_ORDER'] = $this->arResult['DISCOUNT_APPLY_ORDER']['PRICES'];
 
         } catch (Exception $e) {
             $this->errors[] = ['message'=>'getOrderProps', 'error'=>$e->getMessage()];
@@ -235,7 +208,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * Витягуємо інформацію по товару з кошика
      * @param integer $id - товара з корзини
      * @return array - масив з інформацією по товарy в кошику
-    */
+     */
     public function getProductDataList($id)
     {
         // перевіряємо 'товар' чи 'торгова пропозиція' (false - в случае ошибки;)
@@ -254,7 +227,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * @param integer $id - код товару (чи тогргової пропозиції)
      * @param bool $sku - масив з торговою пропозицією
      * @return array
-    */
+     */
     public function makeProductDetailInfo($id, $sku=false)
     {
         $arr = [];
@@ -269,8 +242,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
                 'IBLOCK_SECTION_ID'=>$element['IBLOCK_SECTION_ID'],
                 'ACTIVE'=>$element['ACTIVE'],
                 'NAME'=>$element['NAME'],
-                'PREVIEW_PICTURE'=>$element['PREVIEW_PICTURE'],
-                'DETAIL_PICTURE'=>$element['DETAIL_PICTURE'],
+                'PREVIEW_PICTURE'=>$this->getImageDataById($element['PREVIEW_PICTURE']),
+                'DETAIL_PICTURE'=>$this->getImageDataById($element['DETAIL_PICTURE']),
                 'CODE'=>$element['CODE'],
                 'XML_ID'=>$element['XML_ID'],
                 'USER_NAME'=>$element['USER_NAME'],
@@ -287,12 +260,24 @@ Class CArhicodeBasketSale extends CBitrixComponent
     }
 
     /**
+     * @param $id
+     * @return string|null
+     */
+    public function getImageDataById($id)
+    {
+        $image = NULL;
+        $id = (int)$id;
+        if($id > 0) $image = CFile::GetPath($id);
+        return $image;
+    }
+
+    /**
      * Отримати способи оплати товарів
      */
     public function getSalePaySystem()
     {
+        $this->arResult["PAY_SYSTEM"] = [];
         $resPaySystem = CSalePaySystem::GetList();
-        //$this->arResult["PAY_SYSTEM"] = [];
         while ($arPaySystemItem = $resPaySystem->Fetch()) {
             $this->arResult["PAY_SYSTEM"][] = $arPaySystemItem;
         }
@@ -308,36 +293,57 @@ Class CArhicodeBasketSale extends CBitrixComponent
      */
     public function getSaleDelivery()
     {
-        try {
-            $resDelivery = CSaleDelivery::GetList(
-                Array(),
-                Array("LID" => SITE_ID, "ACTIVE" => "Y"),
-                false,
-                false,
-                Array()
-            );
-            if($arDelivery = $resDelivery->Fetch()) {
-                do {
-                    $this->arResult["DELIVERY_TYPE"][] = $arDelivery;
-                } while ($arDelivery = $resDelivery->Fetch());
-            }
-
-        } catch (Exception $e) {
-            $this->errors[] = ['message'=>'getSaleDelivery', 'error'=>$e->getMessage()];
+        $this->arResult["DELIVERY_TYPE"] = [];
+        $resDelivery = CSaleDelivery::GetList(
+            Array(),
+            Array("LID" => SITE_ID, "ACTIVE" => "Y"),
+            false,
+            false,
+            Array()
+        );
+        if($arDelivery = $resDelivery->Fetch()) {
+            do {
+                $this->arResult["DELIVERY_TYPE"][] = $arDelivery;
+            } while ($arDelivery = $resDelivery->Fetch());
         }
     }
 
-    public function executeTemplate()
+    /**
+     * Метод повертає інформацію по поточному користувачу
+     * @return array
+     */
+    public function getUserInfo()
     {
+        global $USER;
+        $userId = $USER->GetID() ? $USER->GetID() : CSaleUser::GetAnonymousUserID();
 
+        $arUser = [];
+        if($USER->IsAuthorized())
+        {
+            $rsUser = CUser::GetByID($userId);
+            $arUser = $rsUser->Fetch();
+            $arUser = [
+                'ID'=>$arUser['ID'],
+                'LOGIN'=>$arUser['LOGIN'],
+                'NAME'=>$arUser['NAME'],
+                'LAST_NAME'=>$arUser['LAST_NAME'],
+                'EMAIL'=>$arUser['EMAIL'],
+                'PERSONAL_PHONE'=>$arUser['PERSONAL_PHONE'],
+                'PERSONAL_MOBILE'=>$arUser['PERSONAL_MOBILE'],
+            ];
+        }
+        else
+        {
+            $arUser = [
+                'FUSER_ID'=> Fuser::getId(),
+                'USER_ID'=> $USER->GetID(),
+                'ANONYMOUS_USER_ID'=> CSaleUser::GetAnonymousUserID(),
+                'BASKET_USER_ID'=> CSaleBasket::GetBasketUserID(), // Метод возвращает внутренний код владельца корзины
+            ];
+        }
+
+        return $arUser;
     }
-
-    public function executeAjax()
-    {
-
-    }
-
-
 
     /* ACTION ------------------------------------------------------------------------------------------------------- */
 
@@ -345,12 +351,20 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * Prepares action string to execute in doAction
      *  - processOrder - process order [including component template]
      *  - showOrder - show created order [including component template]
-     *  - processOrderAjax - show created order [including component template]
+     *  -
      *
      * @return array|string|null
      */
     protected function prepareAction()
     {
+        global $USER;
+        $this->userId = $USER->GetID() ? $USER->GetID() : CSaleUser::GetAnonymousUserID();
+
+        // TODO - перевірити чи при зміні кількості товару вибирається правильна валюта, переключити форматування на JS
+        $this->currency = $this->request->get('currencyCode');
+        if(!$this->currency) $this->currency = CCurrency::GetBaseCurrency();
+
+
         $action = $this->request->offsetExists($this->arParams['ACTION_VARIABLE'])
             ? $this->request->get($this->arParams['ACTION_VARIABLE'])
             : $this->request->get('action');
@@ -404,6 +418,10 @@ Class CArhicodeBasketSale extends CBitrixComponent
         }
     }
 
+    /**
+     * Метод видаляє товар з кошика (по його коду в кощику)
+     * Спрацьовує через `Ajax` запит і повертає відповідь методом 'sendAjaxAnswer()'
+     */
     public function deleteProductAction()
     {
         $basket = $this->getBasketStorage()->getBasket();
@@ -431,6 +449,10 @@ Class CArhicodeBasketSale extends CBitrixComponent
                     if ($saveResult->isSuccess())
                     {
                         $ajaxData['ERROR'] = 'N';
+                        //$ajaxData['DATA']['PRICE'] = $basket->getPrice();
+                        $ajaxData['DATA']['BASE_PRICE'] = round($basket->getBasePrice(), 2);
+                        $ajaxData['DATA']['FORMATED_BASE_PRICE'] = CurrencyFormat($basket->getBasePrice(), $this->currency);
+                        $ajaxData['DATA']['PRICE_DISCOUNT'] = $this->calculateBasketTotalDiscountPrice($basket);
                     }
                     else
                     {
@@ -438,13 +460,17 @@ Class CArhicodeBasketSale extends CBitrixComponent
                     }
                 }
             }
-            else $ajaxData['ERROR'] ='basket-item';
+            else $ajaxData['ERROR'] ='basket-item-empty';
         }
         else $ajaxData['ERROR'] ='basket-isEmpty';
 
         $this->sendAjaxAnswer($ajaxData);
     }
 
+    /**
+     * Метод змінює кількість товарів в кошику (по його коду в кощику)
+     * Спрацьовує через `Ajax` запит і повертає відповідь методом 'sendAjaxAnswer()'
+     */
     public function changeQuantityAction()
     {
         $quantity = (int)$this->request->get('quantity');
@@ -474,8 +500,9 @@ Class CArhicodeBasketSale extends CBitrixComponent
                 {
                     $ajaxData['ERROR'] = 'N';
                     $ajaxData['DATA']['QUANTITY_NEW'] = $basketItem->getQuantity();
-                    $ajaxData['DATA']['BASE_PRICE'] = $basket->getBasePrice();
-                    $ajaxData['DATA']['PRICE_DISCOUNT_D'] = $this->calculateBasketTotalDiscountPrice($basket);
+                    $ajaxData['DATA']['BASE_PRICE'] = round($basket->getBasePrice(),2);
+                    $ajaxData['DATA']['FORMATED_BASE_PRICE'] = CurrencyFormat($basket->getBasePrice(), $this->currency);
+                    $ajaxData['DATA']['PRICE_DISCOUNT'] = $this->calculateBasketTotalDiscountPrice($basket);
                 }
                 else
                 {
@@ -485,11 +512,247 @@ Class CArhicodeBasketSale extends CBitrixComponent
             else $ajaxData['ERROR'] = 'changeQuantity';
         } else $ajaxData['ERROR'] = 'quantity = 0 or quantity equal';
 
-
-
-        AddMessage2Log(['changeQuantityAction'=>$ajaxData], "ArhicodeBasketSale");
         $this->sendAjaxAnswer($ajaxData);
     }
+
+
+    public function makeCurrentOrderAction()
+    {
+        $ajaxData = [
+            'ACTION' => 'makeCurrentOrder',
+        ];
+
+        $name = trim($this->request->get('userName'));
+
+        $phone = trim($this->request->get('userPhone'));
+        $phone = preg_replace("/[^0-9]/", "", $phone);
+
+        $email = trim($this->request->get('userEmail'));
+
+        $paySystemId = (int)$this->request->get('userPaySystemId');
+
+        $address = trim($this->request->get('userAddress'));
+
+
+        // Кошик
+        $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+        /** @var Order $orderClassName */
+        $orderClassName = $registry->getOrderClassName();
+        $this->order = $orderClassName::create($this->getSiteId(),  $this->userId);
+        $this->order->isStartField();
+        $this->order->setField('STATUS_ID', Sale\OrderStatus::getInitialStatus());
+        $this->initBasket($this->order);
+        // перкладаємо товари з кошику в доставку
+        $this->initShipment($this->order);
+
+
+        // Властивості замовлення
+        $propertyCollection = $this->order->getPropertyCollection();
+        $nameProp = $propertyCollection->getPayerName();
+        $nameProp->setValue($name);
+        $phoneProp = $propertyCollection->getPhone();
+        $phoneProp->setValue($phone);
+        $emailProp = $propertyCollection->getUserEmail();
+        $emailProp->setValue($email);
+        $addressProp = $propertyCollection->getAddress();
+        $addressProp->setValue($address);
+
+
+        // Оплата
+        $paymentCollection = $this->order->getPaymentCollection();
+        $payment = $paymentCollection->createItem(PaySystem\Manager::getObjectById($paySystemId));
+        /*$payment = $paymentCollection->createItem();
+        $paySystemService = PaySystem\Manager::getObjectById($paySystemId);
+        $payment->setFields(array(
+            'PAY_SYSTEM_ID' => $paySystemService->getField("PAY_SYSTEM_ID"),
+            'PAY_SYSTEM_NAME' => $paySystemService->getField("NAME"),
+        ));*/
+
+        //$payment->setField("SUM", $this->order->getPrice());
+        $payment->setField("SUM", $this->order->getPrice());
+        $payment->setField("CURRENCY", $this->order->getCurrency());
+
+
+        $result = $this->order->save();
+        if ($result->isSuccess())
+        {
+            $ajaxData['ORDER_ID'] =  $this->order->getId();
+            $ajaxData['ERROR'] = 'N';
+        }
+        else
+        {
+            $ajaxData['ERROR'] = $result->getErrors();
+        }
+
+        $this->sendAjaxAnswer($ajaxData);
+    }
+
+
+    public function makeCurrentOrderAction_Test()
+    {
+        try {
+            $ajaxData = [
+                'ACTION' => 'makeCurrentOrder',
+            ];
+            $name = trim($this->request->get('userName'));
+            $phone = trim($this->request->get('userPhone'));
+            $phone = preg_replace("/[^0-9]/", "", $phone);
+            $email = trim($this->request->get('userEmail'));
+            $paySystemId = (int)$this->request->get('userPaySystemId');
+            $address = trim($this->request->get('userAddress'));
+            $totalPrice = floatval($this->request->get('totalPrice'));
+
+
+            // Кошик
+            $this->createVirtualOrder();
+            /* @var $shipmentCollection \Bitrix\Sale\ShipmentCollection */
+            $shipmentCollection = $this->order->getShipmentCollection();
+
+            if (intval($this->request['delivery_id']) > 0) {
+                $shipment = $shipmentCollection->createItem(
+                    Bitrix\Sale\Delivery\Services\Manager::getObjectById(
+                        intval($this->request['delivery_id'])
+                    )
+                );
+            } else {
+                $shipment = $shipmentCollection->createItem(
+                    Bitrix\Sale\Delivery\Services\Manager::getObjectById(1)
+                );
+            }
+            /** @var $shipmentItemCollection \Bitrix\Sale\ShipmentItemCollection */
+            $shipmentItemCollection = $shipment->getShipmentItemCollection();
+            $shipment->setField('CURRENCY', $this->order->getCurrency());
+
+            foreach ($this->order->getBasket()->getOrderableItems() as $item) {
+                /**
+                 * @var $item \Bitrix\Sale\BasketItem
+                 * @var $shipmentItem \Bitrix\Sale\ShipmentItem
+                 * @var $item \Bitrix\Sale\BasketItem
+                 */
+                $shipmentItem = $shipmentItemCollection->createItem($item);
+                $shipmentItem->setQuantity($item->getQuantity());
+            }
+
+            // Властивості замовлення
+            $propertyCollection = $this->order->getPropertyCollection();
+            $nameProp = $propertyCollection->getPayerName();
+            $nameProp->setValue($name);
+            $phoneProp = $propertyCollection->getPhone();
+            $phoneProp->setValue($phone);
+            $emailProp = $propertyCollection->getUserEmail();
+            $emailProp->setValue($email);
+            $addressProp = $propertyCollection->getAddress();
+            $addressProp->setValue($address);
+
+            // Оплата
+            $paymentCollection = $this->order->getPaymentCollection();
+            $payment = $paymentCollection->createItem(PaySystem\Manager::getObjectById($paySystemId));
+            $payment->setField("SUM", $this->order->getPrice());
+            $payment->setField("CURRENCY", $this->order->getCurrency());
+
+
+            $result = $this->order->save();
+            if ($result->isSuccess())
+            {
+                $ajaxData['ORDER_ID'] =  $this->order->getId();
+                $ajaxData['ERROR'] = 'N';
+            }
+            else
+            {
+                $ajaxData['ERROR'] = $result->getErrors();
+            }
+
+        } catch (\Exception $e) {
+            $ajaxData['ERROR'] = $e->getMessage();
+        }
+        $this->sendAjaxAnswer($ajaxData);
+    }
+
+
+    public function initShipment($order)
+    {
+        $shipmentCollection = $order->getShipmentCollection();
+        $shipment = $shipmentCollection->createItem(
+            Bitrix\Sale\Delivery\Services\Manager::getObjectById(1)         // доставка
+        );
+        $shipmentItemCollection = $shipment->getShipmentItemCollection();
+        $shipment->setField('CURRENCY', $order->getCurrency());
+
+        /** @var Sale\BasketItem $item */
+        foreach ($order->getBasket()->getOrderableItems() as $item)
+        {
+            /** @var Sale\ShipmentItem $shipmentItem */
+            $shipmentItem = $shipmentItemCollection->createItem($item);
+            $shipmentItem->setQuantity($item->getQuantity());
+        }
+
+        return $shipment;
+    }
+
+    /**
+     * @param bool $isMeaningfulField
+     * @return bool
+     */
+    public function isStartField($isMeaningfulField = false)
+    {
+        if ($this->isStartField === null)
+        {
+            $this->isStartField = true;
+        }
+        else
+        {
+            $this->isStartField = false;
+        }
+
+        if ($isMeaningfulField === true)
+        {
+            $this->isMeaningfulField = true;
+        }
+
+        return $this->isStartField;
+    }
+
+    /**
+     * Append basket(for current FUser) to order object
+     *
+     * @param Order $order
+     * @throws Main\ObjectNotFoundException
+     */
+    protected function initBasket($order)
+    {
+        $basketStorage = $this->getBasketStorage();
+        $this->basket = $basketStorage->getBasket();
+        $result = $this->basket->refresh();
+        if ($result->isSuccess())
+        {
+            $this->basket->save();
+        }
+
+        // right NOW we decide to work only with available basket
+        // full basket won't update anymore
+        $availableBasket = $basketStorage->getOrderableBasket();
+
+        if ($availableBasket->isEmpty())
+        {
+            $this->showEmptyBasket(); // TODO - доробити
+        }
+        $order->appendBasket($availableBasket);
+    }
+
+    /**
+     */
+    public function getBasket()
+    {
+        if (!isset($this->basket))
+        {
+            $this->basket = Sale\Basket::loadItemsForFUser($this->getFUserId(), $this->getSiteId());
+        }
+        return $this->basket;
+    }
+
+
+
+    /* METHOD ------------------------------------------------------------------------------------------------------- */
 
     /**
      * V1.
@@ -512,7 +775,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * а також повертає список цін для кожного з товарів
      * @basket - обєк кошика
      * @return array
-    */
+     */
     public function calculateBasketTotalDiscountPrice($basket)
     {
         if ($basket->count() == 0)
@@ -539,14 +802,19 @@ Class CArhicodeBasketSale extends CBitrixComponent
             unset($code);
         }
         unset($basketItem);
-        return ['FULL_DISCOUNT_PRICE'=>$result, 'DISCOUNT_PRICE_LIST'=>$discountResult];
+
+        return [
+            'FULL_DISCOUNT_PRICE'=>round($result,2),
+            'FULL_DISCOUNT_PRICE_FORMAT'=>CurrencyFormat(round($result,2), $this->currency),
+            'DISCOUNT_PRICE_LIST'=>$discountResult
+        ];
     }
 
     /**
      * V3.
      * Метод повертає всі скидки по кошику
      *  - Застарілий метод
-    */
+     */
     public function getDiscountBasketOld()
     {
         $fuserId = CSaleBasket::GetBasketUserID();
@@ -601,7 +869,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
     /**
      * Метод повертає кошик користувача
      * @return Object
-    */
+     */
     protected function getBasketStorage()
     {
         if (!isset($this->basketStorage))
@@ -612,22 +880,15 @@ Class CArhicodeBasketSale extends CBitrixComponent
     }
 
     /**
-     * Ajax action - оновлюємо кошик відповідно до змін які прийшли
+     * @param $data -
+     * @throws Main\ArgumentException
      */
-    protected function refreshBasketAjaxAction()
-    {
-
-    }
-
-    public function sendAjaxAnswer($data)
+    public function sendAjaxAnswer($ajaxData)
     {
         global $APPLICATION;
-
-        AddMessage2Log(['sendAjaxAnswer'=>$data], "ArhicodeBasketSale");
-
-        $APPLICATION->RestartBuffer();
+        $APPLICATION->RestartBuffer();  // очистити буфер, вивести вміст компонента без header'a і footer`a
         header('Content-Type: application/json');
-        echo Json::encode($data);
+        echo Json::encode($ajaxData);
 
         CMain::FinalActions();
         die();
@@ -640,7 +901,6 @@ Class CArhicodeBasketSale extends CBitrixComponent
     {
         if(isset($this->request['d']) && $this->request['d'] == 'Y')
         {
-            AddMessage2Log("executeComponent: d=Y", "ArhicodeBasketSale");
             $shipmentCollection = $this->order->getShipmentCollection();
             $shipment = $shipmentCollection->createItem();
             $shipment->setFields(array(
@@ -659,29 +919,14 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * Без файла 'component.php' Для цього достатньо перекрити метод 'executeComponent'.
      *  - запускается при виконанні компонента.
      *  - Данний метод, підключає шаблон.
-    */
+     */
     public function executeComponent()
     {
-        global $APPLICATION;
-
-        $this->context = Application::getInstance()->getContext();
-        $isAjaxRequest = $this->request["is_ajax_post"] == "Y";
-        if ($isAjaxRequest)
-            $APPLICATION->RestartBuffer();
-
-        $this->action = $this->prepareAction();
         Sale\Compatible\DiscountCompatibility::stopUsageCompatible();
-        $this->doAction($this->action);
+        $this->doAction($this->prepareAction());
         Sale\Compatible\DiscountCompatibility::revertUsageCompatible();
 
         $this->includeComponentTemplate(); // підключається шаблон 'template.php'.
-
-        if ($isAjaxRequest)
-        {
-            $APPLICATION->FinalActions();
-            die();
-        }
-
         return parent::executeComponent();
     }
 }

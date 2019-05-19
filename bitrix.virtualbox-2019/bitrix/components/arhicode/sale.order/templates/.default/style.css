@@ -1,5 +1,226 @@
 
+/* NAV */
+.ahc-sale-order .ahc-nav-steps{
+    width: 80%;
+    margin: 0px auto;
+    padding-bottom: 30px;
+}
 
+.ahc-sale-order .ahc-step-btn {
+    position: relative;
+    float: left;
+    width: 25%;
+    text-align: center;
+}
+
+.ahc-sale-order .ahc-step-btn span{
+    display: block;
+    width: 35px;
+    height: 35px;
+    border: 1px solid black;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 22px;
+    padding-top: 2px;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    box-sizing: border-box;
+}
+.ahc-sale-order .active-step span{
+    font-weight: bold;
+    border: 1px solid green;
+}
+.ahc-sale-order .current-step span{
+    cursor: pointer;
+}
+
+/* PANELS */
+.ahc-sale-order .ahc-panels{
+    position: relative;
+    min-height: 300px;
+}
+.ahc-sale-order .ahc-panel-left{
+    padding-right: 300px;
+}
+.ahc-sale-order .ahc-panel-right{
+    width: 300px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+.ahc-sale-order .ahc-price{
+    padding-bottom: 20px;
+}
+.ahc-sale-order .ahc-base-price{
+    padding-bottom: 10px;
+    position: relative;
+}
+.ahc-sale-order .ahc-base-price span{
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+.ahc-sale-order .ahc-discount{
+    padding-bottom: 10px;
+    position: relative;
+}
+.ahc-sale-order .ahc-discount span{
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+.ahc-sale-order .ahc-total-price{
+    position: relative;
+    padding: 10px 0px;
+    border-top: 1px solid gray;
+}
+.ahc-sale-order .ahc-total-price span{
+    display: inline-block;
+    position: absolute;
+    right: 0px;
+}
+.ahc-sale-order .ahc-btn-step{
+    padding: 5px;
+    text-align: center;
+    color: white;
+    background-color: #72bb53;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.ahc-sale-order .ahc-total-info{
+    padding: 20px;
+    border: 1px solid #acacac;
+}
+.ahc-sale-order .ahc-allow-order{
+    display: none;
+}
+.ahc-sale-order .ahc-back{
+    display: none;
+    text-align: right;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 13px;
+    padding-top: 15px;
+}
+.ahc-sale-order .ahc-swift-order{
+    padding: 20px 0px;
+}
+.ahc-sale-order .ahc-swift-order > div{
+    padding: 7px;
+    text-align: center;
+    border: 1px solid gray;
+    cursor: pointer;
+}
+.ahc-sale-order .ahc-swift-order p{
+    padding-top: 15px;
+    color: rgb(170, 170, 170);
+    font-size: 12px;
+}
+.ahc-sale-order .ahc-allow-order{
+    padding-top: 20px;
+    font-size: 12px;
+}
+.ahc-sale-order .ahc-allow-order label{
+    font-weight: normal;
+}
+
+/* --- ahc-panel-2,3,4 --- */
+.ahc-sale-order .ahc-panel-2,
+.ahc-sale-order .ahc-panel-3,
+.ahc-sale-order .ahc-panel-4 {
+    display: none;
+}
+
+.ahc-sale-order .ahc-panel-1 h3{
+    font-size: 22px;
+    padding-bottom: 20px;
+    margin: 0px;
+}
+.ahc-panel-1 .ahc-product-panel{
+    margin-top: 15px;
+}
+.ahc-panel-1 .ahc-product{
+    position: relative;
+    min-height: 140px;
+}
+.ahc-panel-1 .ahc-product .ahc-product-img{
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    left: 0px;
+    top: 0px;
+    overflow: hidden;
+}
+.ahc-panel-1 .ahc-product .ahc-product-info{
+    padding-left: 160px;
+}
+.ahc-panel-1 .ahc-product .ahc-product-info > a{
+    font-size: 18px;
+    color: #515151;
+}
+.ahc-panel-1 .ahc-product-delete{
+    float: left;
+    width: 20%;
+    cursor: pointer;
+}
+.ahc-panel-1 .ahc-product-delete:hover{
+    color: red;
+}
+.ahc-panel-1 .ahc-product-quantity{
+    float: left;
+    width: 40%;
+}
+.ahc-panel-1 .ahc-product-price{
+    float: left;
+    width: 40%;
+}
+.ahc-panel-1 .ahc-quantity{
+    width: 40px;
+    line-height: 1;
+    padding: 5px;
+    text-align: center;
+}
+
+.ahc-panel-2 .ahc-user-info > div{
+    padding-top: 15px;
+}
+.ahc-panel-2 .ahc-user-info label{
+    font-weight: normal;
+    display: block;
+}
+.ahc-panel-2 .ahc-user-info input{
+    width: 300px;
+    padding: 5px 10px;
+    background-color: white;
+}
+
+.ahc-panel-3 .ahc-delivery label{
+    font-weight: normal;
+}
+.ahc-panel-3 .ahc-delivery textarea{
+    min-height: 70px;
+    min-width: 100px;
+    width: 400px;
+    background-color: white;
+    resize: none;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.ahc-panel-3 .ahc-pay-system{
+    padding-top: 15px;
+}
+
+/* IMAGE */
+.ahc-sale-order .ahc-product-img{
+    width: 100px;
+}
+.ahc-sale-order .ahc-product-img img{
+    width: 100%;
+}
+
+/* BUTTON */
 .ahc-sale-order .ahc-minus, .ahc-sale-order .ahc-plus{
     display: inline-block;
     width: 20px;
@@ -10,4 +231,17 @@
 }
 .ahc-sale-order .ahc-minus:hover, .ahc-sale-order .ahc-plus:hover{
     background-color: #e6e6e6;
+}
+
+
+
+.block-separator{
+    clear: both;
+}
+.block-separator:before{
+    display: table;
+    content: " ";
+}
+.block-separator:after{
+    clear: both;
 }
