@@ -13,7 +13,8 @@ $APPLICATION->SetTitle('Моя корзина');
 use Bitrix\Main,
     Bitrix\Main\Localization\Loc;
 
-CJSCore::Init(['masked_input']);
+CJSCore::Init(['popup']);
+$this->addExternalJS($templateFolder."/imask.js");
 
 $arrId = [
     'formId' => 'ahc-soa-order-form',
@@ -26,7 +27,9 @@ $arrId = [
     'allowOrder'=>'ahc-allow-order',
 
     'userName'=>'ach-user-name',
+    'userNamePopup'=>'ach-user-name-popup',
     'userPhone'=>'ach-user-phone',
+    'userPhonePopup'=>'ach-user-phone-popup',
     'userEmail'=>'ach-user-email',
 
 ];
@@ -61,6 +64,9 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
 
             <!-- LEFT PANEL -->
             <div class="ahc-panel-left">
+                <div class="ahc-top-back">
+                    <div class="ahc-back">Вернуться в корзину</div>
+                </div>
                 <div class="ahc-panel-1">
                     <h3>Ваш заказ</h3>
                     <div class="ahc-product-block">
@@ -88,7 +94,7 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                                         <div class="ahc-product-price">
                                             <div>Стоимость</div>
                                             <div class="ahc-price-discount"><?=$item['FORMAT_PRICE'];?></div>
-                                            <? if($item['PRICE']!=$item['BASE_PRICE']):?>
+                                            <? if(ceil($item['PRICE']) != $item['BASE_PRICE']):?>
                                                 <div class="ahc-price"><?=$item['FORMAT_BASE_PRICE'];?></div>
                                             <? endif;?>
                                         </div>
@@ -96,7 +102,9 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                                 </div>
                                 <div class="block-separator"></div>
                             </div>
-                        <? endforeach;?>
+                        <?
+                           $ID_END = $item['PROPS']['ID'];
+                        endforeach;?>
                     </div>
                 </div>
 
@@ -162,7 +170,7 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                                             </label>
                                             <span><?=$item['DESCRIPTION'];?></span>
                                         </div>
-                                        <? $i = false;
+                                    <? $i = false;
                                     endif;
                                 endforeach;?>
                             </fieldset>
@@ -219,13 +227,39 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                 </div>
 
                 <div class="ahc-swift-order">
-                    <div>Быстрый заказ</div>
+                    <div id="show-swift-order">Быстрый заказ</div>
                     <p>Вам не нужно заполнять контактную информацию, адрес доставки и способ оплаты. Наш специалист перезвонит вам и уточнит эту информацию.</p>
+                    <div class="ahc-oneclickbuy">
+                        <div id="popup-swift-order">
+                            <div class="ahc-user-group">
+                                <label>Ваши имя и фамилия <span>*</span></label>
+                                <?
+                                $userName = '';
+                                if(isset($arResult['USER_INFO']['NAME']))
+                                    $userName = $arResult['USER_INFO']['NAME'];
+                                if(isset($arResult['USER_INFO']['LAST_NAME']))
+                                    $userName .= ' '.$arResult['USER_INFO']['LAST_NAME'];
+
+                                $userEmail = '';
+                                if(isset($arResult['USER_INFO']['EMAIL']))
+                                    $userEmail = $arResult['USER_INFO']['EMAIL'];
+                                ?>
+                                <input type="text" id="<?=$arrId['userNamePopup'];?>" value="<?=$userName;?>" placeholder="Имя и фамилия" required>
+                            </div>
+                            <div class="ahc-user-group">
+                                <label>Номер телефона для связи <span>*</span></label>
+                                <input id="<?=$arrId['userPhonePopup'];?>" type="text" value="" required>
+                            </div>
+                            <div id="ach-popup-btn" class="ach-popup-btn">
+                                Заказать
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="ahc-allow-order">
                     <label>
-                        <input id="<?=$arrId['allowOrder'];?>" type="checkbox">
+                        <input id="<?=$arrId['allowOrder'];?>" type="checkbox" checked>
                         Согласие на обработку персональных данных
                     </label>
                     <span>* Эти поля обязательны для заполнения</span>
@@ -244,7 +278,7 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
         <h2>Спасибо за покупку</h2>
         <p>В ближайшее время с вами свяжеться наш специалист для уточнения условий доставки.</p>
         <div id="order-executed">
-            <label>Номер заказа: №<span id="oe-number"></span></label>
+            <label>Номер заказа: <span id="oe-number"></span></label>
             <label>Сумма заказа: <span id="oe-sum"></span></label>
             <label>Имя: <span id="oe-name"></span></label>
             <label>Телефон: <span id="oe-phone"></span></label>
@@ -279,8 +313,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 
 
-<hr style="padding-top: 20px">
-<div style="">
+<div style="display: none;">
     <h2>SALE</h2>
     <pre>
     <?php

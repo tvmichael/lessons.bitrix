@@ -17,6 +17,7 @@ BX.Sale.ArhicodeSaleOrder = {
         this.action = null;
         this.nextOperation = true;
         this.tempInputQuantity = true;
+        this.popupWindowByOneClick = null;
 
         // ARRAY
         this.arrButtonStepText = ['Оформить заказ', 'Доставка и оплата', 'Проверить данные', 'Все верно, заказываю'];
@@ -45,7 +46,7 @@ BX.Sale.ArhicodeSaleOrder = {
         this.obOrderForm = BX(this.arrId.formId);
 
         this.obSwiftOrder = BX.findChildren(this.obOrderForm, {"class":"ahc-swift-order"}, true)[0];
-        this.obStepBack = BX.findChildren(this.obOrderForm, {"class":"ahc-back"}, true)[0];
+        this.obStepBack = BX.findChildren(this.obOrderForm, {"class":"ahc-back"}, true);
         this.obAllowOrder = BX(this.arrId.allowOrder);
         this.obStepNavButton = BX.findChildren(this.obOrderForm, {"class":"ahc-step-btn"}, true);
 
@@ -86,9 +87,8 @@ BX.Sale.ArhicodeSaleOrder = {
         this.obActiveProductBlock = null;
 
         this.bindBtnAction();
-        this.setPhoneMask();
-
-        console.log(this);
+        this.setPhoneMask(BX(this.arrId.userPhone));
+        //console.log(this);
     },
 
     calculateDiscount: function()
@@ -143,10 +143,15 @@ BX.Sale.ArhicodeSaleOrder = {
         this.obButtonStep = BX(this.arrId.buttonStep);
         BX.bind(this.obButtonStep, 'click', BX.proxy(this.buttonStepAction, this));
 
-        BX.bind(this.obStepBack, 'click', BX.proxy(this.clickBackAction, this))
+        BX.bind(this.obStepBack[0], 'click', BX.proxy(this.clickBackAction, this));
+        BX.bind(this.obStepBack[1], 'click', BX.proxy(this.clickBackAction, this));
+
+        BX.bind(BX('show-swift-order'), 'click', BX.proxy(this.showWindowBuyOneClick, this));
 
         for(i=0; i < this.obStepNavButton.length; i++)
             BX.bind(this.obStepNavButton[i], 'click', BX.proxy(this.clickNavBackAction, this));
+
+
     },
 
     /**
@@ -160,22 +165,23 @@ BX.Sale.ArhicodeSaleOrder = {
             product,
             value;
 
-        this.cl();
         if( this.nextOperation )
         {
             productBlock = BX.findParent(element, {"class":"ahc-product-panel"}),
-                input = BX.findChildren(productBlock, {"class":'ahc-quantity'}, true)[0],
+            input = BX.findChildren(productBlock, {"class":'ahc-quantity'}, true)[0],
 
-                value = input.value;
+            value = input.value;
             if(BX.hasClass(element,'ahc-quantity'))
             {
                 if(value < 1) input.value = value = 1;
             }
             else if (BX.hasClass(element, 'ahc-plus')) {
+                this.tempInputQuantity = value;
                 value++;
                 input.value = value;
             }
             else if (BX.hasClass(element, 'ahc-minus')) {
+                this.tempInputQuantity = value;
                 value--;
                 if (value < 1) input.value = value = 1;
                 else input.value = value;
@@ -199,7 +205,6 @@ BX.Sale.ArhicodeSaleOrder = {
     {
         var element = e.target;
         this.tempInputQuantity = element.value;
-        this.cl();
     },
 
 
@@ -221,7 +226,6 @@ BX.Sale.ArhicodeSaleOrder = {
             this.nextOperation = false;
             this.sendRequest(this.action);
         }
-        console.log(this);
     },
 
     getData: function()
@@ -253,8 +257,6 @@ BX.Sale.ArhicodeSaleOrder = {
                 data['userAddress'] = this.order.delivery.address;
                 break;
         }
-
-        console.log(data);
         return data;
     },
 
@@ -266,42 +268,36 @@ BX.Sale.ArhicodeSaleOrder = {
             url: this.ajaxUrl,
             data: this.getData(),
             onsuccess: BX.delegate(function(result) {
-                console.log(': result :');
-                console.log(result);
-
                 if(result.ERROR == 'N')
-                    switch (result.ACTION)
-                    {
-                        case 'deleteProduct':
-                            if(result.ERROR == 'basket-item-empty')
-                            {
+                switch (result.ACTION)
+                {
+                    case 'deleteProduct':
+                        if(result.ERROR == 'basket-item-empty')
+                        {
 
-                            }
-                            else
-                            {
-                                this.deleteProductBlockAction(result.DATA);
-                            }
-                            break;
-                        case 'changeQuantity':
-                            this.nextOperation = true;
-                            this.setTotalPrise(result.DATA);
-                            break;
-                        case 'makeCurrentOrder':
-                            this.showCurrentOrder(result);
-                            break;
-                    }
+                        }
+                        else
+                        {
+                            this.deleteProductBlockAction(result.DATA);
+                        }
+                        break;
+                    case 'changeQuantity':
+                        this.nextOperation = true;
+                        this.setTotalPrise(result.DATA);
+                        break;
+                    case 'makeCurrentOrder':
+                        this.showCurrentOrder(result);
+                        break;
+                }
             }, this),
             onfailure: BX.delegate(function(message){
-                this.cl(message);
+                console.log(message);
             }, this)
         });
     },
 
     showCurrentOrder: function(result)
     {
-        console.log('showCurrentOrder:::');
-        console.log(result);
-
         var order = document.getElementsByClassName('order-executed')[0],
             number = document.getElementById('oe-number'),
             sum = document.getElementById('oe-sum'),
@@ -312,15 +308,20 @@ BX.Sale.ArhicodeSaleOrder = {
             pay = document.getElementById('oe-pay');
 
         number.innerHTML = result.ORDER_ID;
+        sum.innerHTML = BX.Currency.currencyFormat(result.ORDER.PRICE, this.result.ORDER.CURRENCY, true);
+
         name.innerHTML = this.order.userInfo.name;
         phone.innerHTML = this.order.userInfo.phone;
         email.innerHTML = this.order.userInfo.email;
         address.innerHTML = this.order.delivery.address,
         pay.innerHTML = this.order.paySystem.name;
-        sum.innerHTML = BX.Currency.currencyFormat(result.ORDER.PRICE, this.result.ORDER.CURRENCY, true);
 
         order.style.display = 'block';
         BX.remove(this.obOrderForm);
+
+        this.popupWindowByOneClick.close();
+        this.popupWindowByOneClick.destroy();
+        this.popupWindowByOneClick = null;
     },
 
     /**
@@ -330,14 +331,14 @@ BX.Sale.ArhicodeSaleOrder = {
     {
         var self = this,
             easing = new BX.easing({
-                duration: 500,
-                start: {opacity: 100},
-                finish: {opacity: 0},
-                transition : BX.easing.transitions.linear,
-                step : function(state){
-                    BX.style(self.obActiveProductBlock, 'opacity', state.opacity/100);
-                }
-            });
+            duration: 500,
+            start: {opacity: 100},
+            finish: {opacity: 0},
+            transition : BX.easing.transitions.linear,
+            step : function(state){
+                BX.style(self.obActiveProductBlock, 'opacity', state.opacity/100);
+            }
+        });
         easing.animate();
 
         setTimeout(function () {
@@ -363,9 +364,9 @@ BX.Sale.ArhicodeSaleOrder = {
     /**
      * Маска на телефон
      */
-    setPhoneMask: function()
+    setPhoneMask: function(element)
     {
-        var result = new BX.MaskedInput({
+        /*var result = new BX.MaskedInput({
             mask: '(999) 999 99 99',
             input: BX(this.arrId.userPhone),
             placeholder: '_'
@@ -378,7 +379,22 @@ BX.Sale.ArhicodeSaleOrder = {
             phone = this.result.USER_INFO.PERSONAL_MOBILE;
 
         if (phone) result.setValue(phone);
-        else result.setValue('0__ ___ __ __');
+        else result.setValue('0__ ___ __ __');*/
+
+        var phone = false;
+
+        //var element = BX(this.arrId.userPhone);
+        var maskOptions = {
+            mask: '(000) 000 00 00'
+        };
+        var mask = IMask(element, maskOptions);
+
+        if(this.result.USER_INFO.PERSONAL_PHONE != '')
+            phone = this.result.USER_INFO.PERSONAL_PHONE;
+        else if (this.result.USER_INFO.PERSONAL_MOBILE != '')
+            phone = this.result.USER_INFO.PERSONAL_MOBILE;
+
+        if (phone) mask.value = phone;
     },
 
     /**
@@ -403,21 +419,21 @@ BX.Sale.ArhicodeSaleOrder = {
             error = false,
             i;
 
-        console.log(this);
-        console.log(step);
-
         switch (step)
         {
             case 1:
                 step = 2;
                 this.obSwiftOrder.style.display = 'none';
                 allowDiv.style.display = 'block';
-                this.obStepBack.style.display = 'block';
+                this.obStepBack[0].style.display = 'block';
+                this.obStepBack[1].style.display = 'block';
                 nextStep = true;
 
                 BX.removeClass(this.obStepNavButton[0], 'current-step');
                 BX.addClass(this.obStepNavButton[0], 'active-step');
                 BX.addClass(this.obStepNavButton[1], 'current-step');
+
+                this.panelList[1].scrollIntoView();
                 break;
             case 2:
                 if(!this.validateUserName() || !this.validateUserEmail() || !this.validateUserPhone())
@@ -429,7 +445,8 @@ BX.Sale.ArhicodeSaleOrder = {
                     BX.removeClass(this.obStepNavButton[1], 'current-step');
                     BX.addClass(this.obStepNavButton[1], 'active-step');
                     BX.addClass(this.obStepNavButton[2], 'current-step');
-                    this.obStepBack.innerHTML = 'Вернуться назад';
+                    this.obStepBack[0].innerHTML = 'Вернуться назад';
+                    this.obStepBack[1].innerHTML = 'Вернуться назад';
 
                     this.order.userInfo.name = this.obUserName.value;
                     this.order.userInfo.phone = this.obUserPhone.value;
@@ -441,6 +458,8 @@ BX.Sale.ArhicodeSaleOrder = {
                     step = 3;
                     allowDiv.style.display = 'none';
                     nextStep = true;
+
+                    this.panelList[2].scrollIntoView();
                 }
                 break;
             case 3:
@@ -464,6 +483,8 @@ BX.Sale.ArhicodeSaleOrder = {
                         this.obConfirmOrderEmail.innerHTML = this.order.userInfo.email;
                         this.obConfirmOrderAddress.innerHTML = this.order.delivery.address;
                         this.obConfirmOrderPay.innerHTML = this.order.paySystem.name;
+
+                        this.panelList[3].scrollIntoView();
                         break;
                     }
                 }
@@ -491,7 +512,6 @@ BX.Sale.ArhicodeSaleOrder = {
             this.obButtonStep.setAttribute('data-step', step);
             this.obButtonStep.innerHTML = this.arrButtonStepText[step-1];
         }
-        console.log(this.order);
     },
 
     validateUserName: function()
@@ -560,9 +580,6 @@ BX.Sale.ArhicodeSaleOrder = {
             allowDiv = BX.findParent(this.obAllowOrder, {"class":"ahc-allow-order"}),
             i;
 
-        console.log(this);
-        console.log(step);
-
         switch (step)
         {
             case 1:
@@ -572,7 +589,8 @@ BX.Sale.ArhicodeSaleOrder = {
                 step = 1;
                 this.obSwiftOrder.style.display = 'block';
                 allowDiv.style.display = 'none';
-                this.obStepBack.style.display = 'none';
+                this.obStepBack[0].style.display = 'none';
+                this.obStepBack[1].style.display = 'none';
                 BX.removeClass(this.obStepNavButton[1], 'current-step');
                 BX.removeClass(this.obStepNavButton[0], 'active-step');
                 BX.addClass(this.obStepNavButton[0], 'current-step');
@@ -580,7 +598,8 @@ BX.Sale.ArhicodeSaleOrder = {
             case 3:
                 step = 2;
                 allowDiv.style.display = 'block';
-                this.obStepBack.innerHTML = 'Вернуться в корзину';
+                this.obStepBack[0].innerHTML = 'Вернуться в корзину';
+                this.obStepBack[1].innerHTML = 'Вернуться в корзину';
                 BX.removeClass(this.obStepNavButton[2], 'current-step');
                 BX.removeClass(this.obStepNavButton[1], 'active-step');
                 BX.addClass(this.obStepNavButton[1], 'current-step');
@@ -597,8 +616,6 @@ BX.Sale.ArhicodeSaleOrder = {
         this.panelList[step].style.display = 'block';
         this.obButtonStep.setAttribute('data-step', step);
         this.obButtonStep.innerHTML = this.arrButtonStepText[step-1];
-
-        console.log(this.order);
     },
 
     clickNavBackAction: function(e)
@@ -609,9 +626,86 @@ BX.Sale.ArhicodeSaleOrder = {
         if(parseInt(element.textContent) == (step - 1)) this.clickBackAction();
     },
 
-    cl: function (message)
+    showWindowBuyOneClick: function ()
     {
-        if(message) console.log(message);
-        else console.log(this);
+        console.log('showWindowBuyOneClick');
+        if(!this.popupWindowByOneClick) {
+            this.popupWindowByOneClick = BX.PopupWindowManager.create("popup-message-buy", null, {
+                content: BX('popup-swift-order'),
+                width: 400, // ширина окна
+                height: 360, // высота окна
+                zIndex: 100, // z-index
+                closeIcon: {
+                    // объект со стилями для иконки закрытия, при null - иконки не будет
+                    opacity: 1
+                },
+                titleBar: 'Быстрый заказ',
+                closeByEsc: true, // закрытие окна по esc
+                darkMode: false, // окно будет светлым или темным
+                autoHide: false, // закрытие при клике вне окна
+                draggable: false, // можно двигать или нет
+                resizable: false, // можно ресайзить
+                min_height: 100, // минимальная высота окна
+                min_width: 100, // минимальная ширина окна
+                lightShadow: true, // использовать светлую тень у окна
+                angle: false, // появится уголок
+                overlay: {
+                    // объект со стилями фона
+                    opacity: 200
+                },
+            });
+            this.setPhoneMask(BX(this.arrId.userPhonePopup));
+            BX.bind(BX('ach-popup-btn'), 'click', BX.proxy(this.popupSwiftOrder, this));
+        }
+        //console.log(this.PopupWindowByOneClick);
+        this.popupWindowByOneClick.show();
+    },
+
+    popupSwiftOrder: function ()
+    {
+        var name = BX(this.arrId.userNamePopup),
+            phone = BX(this.arrId.userPhonePopup),
+            re = /[(]?[0-9]{3}[)]? [0-9]{3} [0-9]{2} [0-9]{2}/i,
+            i;
+
+        if(name.value.length > 3)
+        {
+            name.style.borderColor = '#eaebec';
+        }
+        else
+        {
+            name.style.borderColor = 'red';
+            return false;
+        }
+
+        if(!re.test(phone.value))
+        {
+            phone.style.borderColor = 'red';
+            return false;
+        }
+        else
+        {
+            phone.style.borderColor = '#eaebec';
+        }
+
+        for(i = 0; i < this.result.PAY_SYSTEM.length; i++)
+        {
+            if(this.result.PAY_SYSTEM[i].ACTIVE == 'Y')
+            {
+                this.order.paySystem.id = this.result.PAY_SYSTEM[i].ID;
+                break;
+            }
+        }
+
+        this.orderCheck = true;
+        this.action = 'makeCurrentOrder';
+        this.order.userInfo.name = name.value;
+        this.order.userInfo.phone = phone.value;
+        this.order.userInfo.email = '';
+        this.order.delivery.address = '';
+
+        this.sendRequest(this.action);
+        BX.unbind(BX('ach-popup-btn'), 'click', BX.proxy(this.popupSwiftOrder, this));
+        this.popupWindowByOneClick.setContent('<br><h3>Загрузка ... </h3>');
     }
 };

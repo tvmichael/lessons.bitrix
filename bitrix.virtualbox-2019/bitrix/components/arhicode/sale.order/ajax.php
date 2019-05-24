@@ -6,9 +6,6 @@ define('DisableEventsCheck', true);
 define('BX_SECURITY_SHOW_MESSAGE', true);
 define('NOT_CHECK_PERMISSIONS', true);
 
-//define("LOG_FILENAME", $_SERVER["DOCUMENT_ROOT"]."/test/log.txt");
-
-// якщо вказано сайт, то реєструємо його (для випадку декількох сайтів на хості)
 if (isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
     $siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site_id']), 0, 2);
@@ -18,14 +15,11 @@ if (isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
     }
 }
 
-// підключаємо 'пролог' (для доступу до модулів Бітрікса)
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-// беремо контекст
 $request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
 
-// перевіряємо сесію і метод запиту
 if (!check_bitrix_sessid() || !$request->isPost())
     return;
 
@@ -52,7 +46,6 @@ if (empty($action))
 
 global $APPLICATION;
 
-//AddMessage2Log("___AJAX___3", "ArhicodeBasketSale");
 $APPLICATION->IncludeComponent(
     'arhicode:sale.order',
     '.default',

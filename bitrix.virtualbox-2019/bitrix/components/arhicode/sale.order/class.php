@@ -16,8 +16,9 @@ use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Context;
+
 //
-//use Bitrix\Main\Diag\Debug;
+use Bitrix\Main\Diag\Debug;
 
 
 Class CArhicodeBasketSale extends CBitrixComponent
@@ -117,7 +118,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
     /**
      * Для получения Внутреннего кода владельца корзины,
      * (если нужно сделать заказ с существующей корзиной)
-     */
+    */
     protected function getFuserId()
     {
         if ($this->fUserId === null)
@@ -648,9 +649,11 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
     /**
      * Оформлюємо замовлення
-     */
+    */
     public function makeCurrentOrderAction()
     {
+        global $USER;
+
         $ajaxData = [
             'ACTION' => 'makeCurrentOrder',
         ];
@@ -665,6 +668,63 @@ Class CArhicodeBasketSale extends CBitrixComponent
         $paySystemId = (int)$this->request->get('userPaySystemId');
 
         $address = trim($this->request->get('userAddress'));
+
+        if(!$USER->IsAuthorized())
+        {
+            Debug::writeToFile(['N'=>1],'makeCurrentOrderAction','/test/log.txt');
+
+            if($email != '' || $phone != '')
+            {
+                if(filter_var($email, FILTER_VALIDATE_EMAIL) !== false) $userEmail = $email;
+                else $userEmail = false;
+
+                if(strlen($phone) == 10 && is_int(intval($phone))) $userPhone = $phone;
+                else $userPhone = false;
+            }
+
+            if(!$userEmail && !$userPhone)
+            {
+                $ajaxData['ERROR'] = 'Invalid Email or Phone';
+                $this->sendAjaxAnswer($ajaxData);
+            }
+
+            $userLogin = '';
+            if ($userEmail)
+            {
+                $userLogin = $userEmail;
+                $userPhone = '';
+            }
+            elseif ($userPhone)
+            {
+                $userLogin = 'USER_'.$userPhone;
+                $userEmail = 'USER_'.$userPhone.'@email.ssk';
+            }
+
+            if( strlen($name) < 3) $name = $userEmail;
+
+            $user = new CUser;
+            $arFields = Array(
+                "NAME"              => $name,
+                "LAST_NAME"         => "",
+                "EMAIL"             => $userEmail,
+                "LOGIN"             => $userLogin,
+                "LID"               => 'ru',
+                "ACTIVE"            => "Y",
+                "GROUP_ID"          => array(2,3,5),
+                "PASSWORD"          => "123456",
+                "CONFIRM_PASSWORD"  => "123456",
+                'PERSONAL_PHONE'    => $userPhone,
+            );
+
+            $userID = $user->Add($arFields);
+        }
+
+        if($userID) $this->userId = $userID;
+
+
+        Debug::writeToFile(['N'=>2, 'ID'=>$userID, 'data'=>$arFields],'makeCurrentOrderAction','/test/log.txt');
+        //return;
+
 
 
         // Кошик
@@ -699,8 +759,10 @@ Class CArhicodeBasketSale extends CBitrixComponent
         $payment->setField("SUM", $this->order->getPrice());
         $payment->setField("CURRENCY", $this->order->getCurrency());
 
-
         $result = $this->order->save();
+
+        Debug::writeToFile(['N'=>3, 'R'=>$result->isSuccess(),],'makeCurrentOrderAction','/test/log.txt');
+
         if ($result->isSuccess())
         {
             $ajaxData['ORDER_ID'] =  $this->order->getId();
@@ -716,7 +778,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
     /**
      * Метод перекладає всі товари з кошика в замовлення
-     */
+    */
     public function initShipment($order)
     {
         $delivertId = 1; // id доставки
@@ -788,7 +850,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
     }
 
     /**
-     */
+    */
     public function getBasket()
     {
         if (!isset($this->basket))
