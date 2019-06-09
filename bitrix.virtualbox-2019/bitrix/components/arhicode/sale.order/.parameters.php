@@ -14,9 +14,16 @@ use Bitrix\Iblock;
 if (!Loader::includeModule('sale'))
     return;
 
-$siteId = isset($_REQUEST['src_site']) && is_string($_REQUEST['src_site']) ? $_REQUEST['src_site'] : '';
-$siteId = substr(preg_replace('/[^a-z0-9_]/i', '', $siteId), 0, 2);
+if (!Loader::includeModule('iblock'))
+    return;
 
+$arIBlock = array();
+$rsIBlock = CIBlock::GetList(array('ID' => 'ASC',), array('ACTIVE'=>'Y',));
+while ($arr = $rsIBlock->Fetch())
+{
+    $arIBlock[$arr['ID']] = $arr['ID'].'. '.$arr['NAME'].' ('.$arr['CODE'].')';
+}
+unset($rsIBlock, $arr);
 
 $arComponentParameters = array(
     "GROUPS" => array(
@@ -39,6 +46,14 @@ $arComponentParameters = array(
             "MULTIPLE" => "N",
             "DEFAULT" => "soa-action",
             "PARENT" => "ADDITIONAL_SETTINGS",
+        ),
+        "IBLOCK_TYPE_ID" => array(
+            "PARENT" => "SETTINGS",
+            "NAME" => GetMessage("SOA_INFOBLOCK_TYPE_PHR"),
+            "TYPE" => "LIST",
+            "ADDITIONAL_VALUES" => "Y",
+            "VALUES" => $arIBlock,
+            "REFRESH" => "Y"
         ),
     )
 );
