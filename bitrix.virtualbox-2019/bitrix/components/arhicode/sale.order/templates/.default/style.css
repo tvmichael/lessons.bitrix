@@ -429,22 +429,6 @@
     cursor: pointer;
 }
 
-
-/* --- OTHER STYLE -------------------------------------------------------------------------------------------------- */
-.wrapper_inner .container .h1-title-block{
-    display: block;
-}
-.wrapper_inner .container .page-title-main{
-    text-align: center;
-    padding-right: 0px;
-}
-
-.ahc-sale-order .bascket-empty{
-    display: none;
-    font-size: 18px;
-    padding: 20px 0px;
-    color: red;
-}
 /* order is executed */
 .ahc-sale-order .order-executed{
     display: none;
@@ -471,6 +455,30 @@
 }
 .ahc-sale-order .order-executed span {
     color: black;
+}
+.ahc-sale-order .platon-ps-form{
+    display: none;
+}
+.ahc-sale-order .oe-ps-platon{
+    background-color: #4fad00;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* --- OTHER STYLE -------------------------------------------------------------------------------------------------- */
+.wrapper_inner .container .h1-title-block{
+    display: block;
+}
+.wrapper_inner .container .page-title-main{
+    text-align: center;
+    padding-right: 0px;
+}
+
+.ahc-sale-order .bascket-empty{
+    display: none;
+    font-size: 18px;
+    padding: 20px 0px;
+    color: red;
 }
 
 .block-separator{

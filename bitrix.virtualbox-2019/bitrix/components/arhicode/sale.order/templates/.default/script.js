@@ -88,7 +88,6 @@ BX.Sale.ArhicodeSaleOrder = {
 
         this.bindBtnAction();
         this.setPhoneMask(BX(this.arrId.userPhone));
-        //console.log(this);
     },
 
     calculateDiscount: function()
@@ -109,9 +108,6 @@ BX.Sale.ArhicodeSaleOrder = {
         return discountSum;
     },
 
-    /**
-     * Прикріпляємо події до кнопок
-     */
     bindBtnAction: function()
     {
         var i;
@@ -154,9 +150,6 @@ BX.Sale.ArhicodeSaleOrder = {
 
     },
 
-    /**
-     * Змінюємо кількість товару
-     */
     changeQuantityAction: function(e)
     {
         var element = e.target,
@@ -164,6 +157,8 @@ BX.Sale.ArhicodeSaleOrder = {
             input,
             product,
             value;
+
+        var minValue = parseInt(element.getAttribute('data-min'));
 
         if( this.nextOperation )
         {
@@ -183,7 +178,7 @@ BX.Sale.ArhicodeSaleOrder = {
             else if (BX.hasClass(element, 'ahc-minus')) {
                 this.tempInputQuantity = value;
                 value--;
-                if (value < 1) input.value = value = 1;
+                if (value < minValue) input.value = value = minValue;
                 else input.value = value;
             }
 
@@ -207,10 +202,6 @@ BX.Sale.ArhicodeSaleOrder = {
         this.tempInputQuantity = element.value;
     },
 
-
-    /**
-     * Видаляємо товар по його коду ID в кошику - 'BASKET_CODE'
-     */
     productDeleteAction: function (e)
     {
         var productBlock;
@@ -298,6 +289,8 @@ BX.Sale.ArhicodeSaleOrder = {
 
     showCurrentOrder: function(result)
     {
+        //console.log('showCurrentOrder');
+
         var order = document.getElementsByClassName('order-executed')[0],
             number = document.getElementById('oe-number'),
             sum = document.getElementById('oe-sum'),
@@ -305,7 +298,12 @@ BX.Sale.ArhicodeSaleOrder = {
             phone = document.getElementById('oe-phone'),
             email = document.getElementById('oe-email'),
             address = document.getElementById('oe-address'),
-            pay = document.getElementById('oe-pay');
+            pay = document.getElementById('oe-pay'),
+            // form
+            form = order.getElementsByClassName('platon-ps-form')[0],
+            input = form.getElementsByTagName("input");
+
+        var i, key;
 
         number.innerHTML = result.ORDER_ID;
         sum.innerHTML = BX.Currency.currencyFormat(result.ORDER.PRICE, this.result.ORDER.CURRENCY, true);
@@ -316,17 +314,41 @@ BX.Sale.ArhicodeSaleOrder = {
         address.innerHTML = this.order.delivery.address,
         pay.innerHTML = this.order.paySystem.name;
 
+		dataLayerLastStep(result.ORDER_ID, result.ORDER.PRICE);
+        console.log(result);
+
+        if(result.PLATON)
+        {
+            for(i = 0; i < input.length; i++)
+            {
+                key = input[i].getAttribute('name');
+                switch (key)
+                {
+                    case "key":
+                    case "sign":
+                    case "data":
+                    case "order":
+                    case "last_name":
+                    case "email":
+                    case "phone":
+                        input[i].value = result.PLATON[key];
+                        break;
+                }
+            }
+            form.style.display = 'block';
+        }
+
         order.style.display = 'block';
         BX.remove(this.obOrderForm);
 
-        this.popupWindowByOneClick.close();
-        this.popupWindowByOneClick.destroy();
+        if(this.popupWindowByOneClick)
+        {
+            this.popupWindowByOneClick.close();
+            this.popupWindowByOneClick.destroy();
+        }
         this.popupWindowByOneClick = null;
     },
 
-    /**
-     * Видаляємо блок з продуктом
-     */
     deleteProductBlockAction: function(data)
     {
         var self = this,
@@ -360,10 +382,6 @@ BX.Sale.ArhicodeSaleOrder = {
         }
     },
 
-
-    /**
-     * Маска на телефон
-     */
     setPhoneMask: function(element)
     {
         /*var result = new BX.MaskedInput({
@@ -381,6 +399,7 @@ BX.Sale.ArhicodeSaleOrder = {
         if (phone) result.setValue(phone);
         else result.setValue('0__ ___ __ __');*/
 
+        /*
         var phone = false;
 
         //var element = BX(this.arrId.userPhone);
@@ -395,11 +414,21 @@ BX.Sale.ArhicodeSaleOrder = {
             phone = this.result.USER_INFO.PERSONAL_MOBILE;
 
         if (phone) mask.value = phone;
+        */
+
+        var phoneNumber = '';
+
+        if(this.result.USER_INFO.PERSONAL_PHONE != '')
+            phoneNumber = this.result.USER_INFO.PERSONAL_PHONE;
+        else if (this.result.USER_INFO.PERSONAL_MOBILE != '')
+            phoneNumber = this.result.USER_INFO.PERSONAL_MOBILE;
+
+        $(document).ready(function(){
+            $(element).val(phoneNumber);
+            $(element).mask('+38(000) 000 00 00');
+        });
     },
 
-    /**
-     * Встановлюємо нові значення ціни в 'загальний' блок цін
-     */
     setTotalPrise: function(dataPrice)
     {
         this.basePrice.innerHTML = BX.Currency.currencyFormat(dataPrice.PRICE_DISCOUNT.FULL_PRICE_BASE,this.result.ORDER.CURRENCY,true);
@@ -407,9 +436,6 @@ BX.Sale.ArhicodeSaleOrder = {
         this.discount.innerHTML = BX.Currency.currencyFormat((dataPrice.PRICE_DISCOUNT.FULL_PRICE_BASE - dataPrice.PRICE_DISCOUNT.FULL_DISCOUNT_PRICE),this.result.ORDER.CURRENCY,true);
     },
 
-    /**
-     * Крок
-     */
     buttonStepAction: function(e)
     {
         var step = parseInt(this.obButtonStep.getAttribute('data-step')),
@@ -418,11 +444,12 @@ BX.Sale.ArhicodeSaleOrder = {
             allowDiv = BX.findParent(this.obAllowOrder, {"class":"ahc-allow-order"}),
             error = false,
             i;
+        var title = document.getElementsByClassName('h1-title-block')[0];
 
         switch (step)
         {
             case 1:
-                step = 2;
+                
                 this.obSwiftOrder.style.display = 'none';
                 allowDiv.style.display = 'block';
                 this.obStepBack[0].style.display = 'block';
@@ -432,8 +459,11 @@ BX.Sale.ArhicodeSaleOrder = {
                 BX.removeClass(this.obStepNavButton[0], 'current-step');
                 BX.addClass(this.obStepNavButton[0], 'active-step');
                 BX.addClass(this.obStepNavButton[1], 'current-step');
+				
+				dataLayerNextStepBascet(step);
 
-                this.panelList[1].scrollIntoView();
+				if(window.innerWidth < 769) title.scrollIntoView();
+				step = 2;
                 break;
             case 2:
                 if(!this.validateUserName() || !this.validateUserEmail() || !this.validateUserPhone())
@@ -455,11 +485,14 @@ BX.Sale.ArhicodeSaleOrder = {
                     this.obDdeliveryName.innerHTML = this.order.userInfo.name;
                     this.obDdeliveryEmail.innerHTML = this.order.userInfo.email;
                     this.obDdeliveryPhone.innerHTML = this.order.userInfo.phone;
+					
+					dataLayerNextStepBascet(step);
+					
                     step = 3;
                     allowDiv.style.display = 'none';
                     nextStep = true;
 
-                    this.panelList[2].scrollIntoView();
+                    if(window.innerWidth < 769) title.scrollIntoView();
                 }
                 break;
             case 3:
@@ -476,6 +509,9 @@ BX.Sale.ArhicodeSaleOrder = {
                         this.order.paySystem.id = this.obGroupPay[i].value;
                         this.order.paySystem.name = this.obGroupPay[i].getAttribute('data-name');
                         nextStep = true;
+						
+						dataLayerNextStepBascet(step);
+						
                         step = 4;
 
                         this.obConfirmOrderName.innerHTML = this.order.userInfo.name;
@@ -484,7 +520,7 @@ BX.Sale.ArhicodeSaleOrder = {
                         this.obConfirmOrderAddress.innerHTML = this.order.delivery.address;
                         this.obConfirmOrderPay.innerHTML = this.order.paySystem.name;
 
-                        this.panelList[3].scrollIntoView();
+                        if(window.innerWidth < 769) title.scrollIntoView();
                         break;
                     }
                 }
@@ -499,6 +535,7 @@ BX.Sale.ArhicodeSaleOrder = {
 
                 break;
             case 4:
+				
                 this.orderCheck = true;
                 this.action = 'makeCurrentOrder';
                 this.sendRequest(this.action);

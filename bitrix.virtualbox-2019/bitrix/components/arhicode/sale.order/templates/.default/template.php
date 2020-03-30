@@ -14,7 +14,7 @@ use Bitrix\Main,
     Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(['popup']);
-$this->addExternalJS($templateFolder."/imask.js");
+$this->addExternalJS($templateFolder."/jquery.mask.js");
 
 $arrId = [
     'formId' => 'ahc-soa-order-form',
@@ -68,9 +68,36 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                     <div class="ahc-back">Вернуться в корзину</div>
                 </div>
                 <div class="ahc-panel-1">
+
+
                     <h3>Ваш заказ</h3>
                     <div class="ahc-product-block">
                         <? foreach ($arResult['PRODUCT_LIST'] as $key=>$item):?>
+						
+							<?
+							/*створюємо дерево батьків каталога для dataLayer.puth*/
+							if(CModule::IncludeModule("iblock"))
+							{
+								$res = CIBlockElement::GetByID($item["PRODUCT_ID"]);
+								if($ar_res = $res->GetNext()) $item["IBLOCK_SECTION_ID"]=$ar_res["IBLOCK_SECTION_ID"];
+							}
+							$nav = CIBlockSection::GetNavChain(false, $item["IBLOCK_SECTION_ID"]);
+							$treePerents = [];
+							while($tree = $nav->Fetch()){
+								$treePerents[] = $tree["NAME"];
+							}
+							$category=$treePerents[0];
+							$contTreePerents=count($treePerents);
+							if($contTreePerents>1){
+								for($i=1;$i<$contTreePerents;$i++)
+								{ 
+									$category.="/".$treePerents[$i];
+								}
+							}
+							$arResult["PRODUCT_LIST"][$item["PRODUCT_ID"]]["CATEGORY"]=$category;
+							/*end створюємо дерево батьків каталога для dataLayer.puth*/
+							?>
+
                             <div class="ahc-product">
                                 <div class="ahc-product-img">
                                     <a href="<?=$item['PROPS']['DETAIL_PAGE_URL'];?>">
@@ -86,7 +113,7 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                                         <div class="ahc-product-quantity">
                                             <div>Количество</div>
                                             <div>
-                                                <span class="ahc-minus">&#8211;</span>
+                                                <span class="ahc-minus" data-min="<?echo !empty($item['PROPS']['ITEMS_PROPS']['min_count_4_order'])?$item['PROPS']['ITEMS_PROPS']['min_count_4_order']:'1';?>">&#8211;</span>
                                                 <input class="ahc-quantity" type="text" value="<?=$item['QUANTITY'];?>">
                                                 <span class="ahc-plus">+</span>
                                             </div>
@@ -105,6 +132,87 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                         <?
                            $ID_END = $item['PROPS']['ID'];
                         endforeach;?>
+						
+                        <script>
+                        var  dataLayer = [];
+
+                        function dataLayerNextStepBascet(step)
+                        {
+                            switch (step)
+                                {
+                                    case 100:
+                                        optionText = 'Basket';
+                                        startStep = 50;
+                                        step = 1;
+                                        break;
+                                    case 1:
+                                        optionText = 'Contacts info';
+                                        step++;
+                                        break;
+                                    case 2:
+                                        optionText = 'Delivery and Payment';
+                                        step++;
+                                        break;
+                                    case 3:
+                                        optionText = 'Confirm';
+                                        step++;
+                                        break;
+                                }
+                            dataLayer.push({
+                                    'event': 'checkout',
+                                    'actionField':
+                                        {
+                                            'step': step,
+                                            'option': optionText
+                                        },
+                                    'ecommerce': {
+                                        'checkout': {
+                                            'products': [
+                                                <?foreach ($arResult['PRODUCT_LIST'] as $arrKram)
+                                                {?>
+                                                    {
+                                                        'name': '<?=$arrKram["PROPS"]["NAME"]?>',
+                                                        'id': '<?=$arrKram["PRODUCT_ID"]?>',
+                                                        'price': '<?=$arrKram["FINAL_PRICE"]?>',
+                                                        'category': '<?=$arResult["PRODUCT_LIST"][$arrKram["PRODUCT_ID"]]["CATEGORY"]?>',
+                                                        'quantity': '<?=$arrKram["QUANTITY"]?>'
+                                                    },
+                                                <?}?>
+                                            ]
+                                        }
+                                    }
+                            });
+                        }
+                        function dataLayerLastStep(id, sum) {
+                                dataLayer.push({
+                                    'event':'enhancedEcommerce',
+                                    'ecommerce': {
+                                    'purchase': {
+                                    'actionField': {
+                                        'id': id,
+                                        'revenue': sum
+                                        },
+                                        'products': [
+                                                <?foreach ($arResult['PRODUCT_LIST'] as $arrKram)
+                                                {?>
+                                                    {
+                                                        'name': '<?=$arrKram["PROPS"]["NAME"]?>',
+                                                        'id': '<?=$arrKram["PRODUCT_ID"]?>',
+                                                        'price': '<?=$arrKram["FINAL_PRICE"]?>',
+                                                        'category': '<?=$arResult["PRODUCT_LIST"][$arrKram["PRODUCT_ID"]]["CATEGORY"]?>',
+                                                        'quantity': '<?=$arrKram["QUANTITY"]?>'
+                                                    },
+                                                <?}?>
+                                            ]
+                                        }
+                                    }
+                                });
+                        }
+                        var startStep = 100;
+                        if(startStep=100){
+                            dataLayerNextStepBascet(startStep);
+                        }
+                        </script>
                     </div>
                 </div>
 
@@ -221,7 +329,7 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
                         Сума заказа
                         <span id="<?=$arrId['totalPrice'];?>"><?=$arResult['ORDER_PRICE_FORMATED'];?></span>
                     </div>
-                    <div class="ahc-btn-step" id="<?=$arrId['buttonStep'];?>" data-step="1">
+                    <div class="ahc-btn-step bascet" id="<?=$arrId['buttonStep'];?>" data-step="1">
                         Оформить заказ
                     </div>
                 </div>
@@ -259,8 +367,24 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
 
                 <div class="ahc-allow-order">
                     <label>
+                        <!--
                         <input id="<?=$arrId['allowOrder'];?>" type="checkbox" checked>
                         Согласие на обработку персональных данных
+                        -->
+                        <?
+                        $APPLICATION->IncludeComponent(
+                                "bitrix:main.userconsent.request",
+                                "template.userconsent.request",
+                                Array(
+                                "ID" => "1",
+                                    "IS_CHECKED" => "Y",
+                                    "IS_LOADED" => "Y",
+                                    "AUTO_SAVE" => "N",
+                                    "SUBMIT_EVENT_NAME" => $arrId["buttonStep"]
+                                ),
+                                false
+                        );
+                        ?>
                     </label>
                     <span>* Эти поля обязательны для заполнения</span>
                 </div>
@@ -285,6 +409,24 @@ $currencyFormat = CCurrencyLang::GetFormatDescription($arResult['ORDER']['CURREN
             <label>Email: <span id="oe-email"></span></label>
             <label>Адрес доставки: <span id="oe-address"></span></label>
             <label>Способ оплаты: <span id="oe-pay"></span></label>
+
+            <form class="platon-ps-form" action="https://secure.platononline.com/payment/auth" method="POST">
+                <input type="hidden" name="url" value="https://ssk-market.com.ua/personal/order/payment/result.php">
+                <input type="hidden" name="error_url" value="https://ssk-market.com.ua/personal/order/payment/error.php">
+                <input type="hidden" name="lang" value="UK">
+                <input type="hidden" name="payment" value="CC">
+
+                <input type="hidden" name="key" value="">
+                <input type="hidden" name="sign" value="">
+                <input type="hidden" name="data" value="">
+                <input type="hidden" name="order" value="">
+                <input type="hidden" name="last_name" value="">
+                <input type="hidden" name="first_name" value="">
+                <input type="hidden" name="email" value="">
+                <input type="hidden" name="phone" value="">
+
+                <input class="button oe-ps-platon" type="submit" value="Оплатить платежной картой">
+            </form>
         </div>
     </div>
 </div>
@@ -308,25 +450,4 @@ $messages = Loc::loadLanguageFile(__FILE__);
     });
 </script>
 
-
-
-
-
-
-<div style="display: none;">
-    <h2>SALE</h2>
-    <pre>
-    <?php
-    echo 'PARAMS:<br>';
-    print_r($arParams);
-    echo '<br>';
-    print_r($signedParams);
-    print_r($messages);
-    echo '<hr>';
-    echo 'RESULT:<br>';
-    print_r($arResult);
-    //echo $templateFolder.'<br>';
-    //echo SITE_TEMPLATE_PATH;
-    ?>
-    </pre>
-</div>
+<? if($USER->IsAdmin()) {echo '<pre>arr </br>'; print_r($arParams); print_r($arResult); echo '</pre>';} ?>
