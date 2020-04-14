@@ -16,7 +16,6 @@ use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Context;
-
 //
 use Bitrix\Main\Diag\Debug;
 
@@ -82,6 +81,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
         {
             $arParams['ACTION_VARIABLE'] = 'soa-action';
         }
+
+        $arParams['IBLOCK_TYPE_ID'] = (int)$arParams['IBLOCK_TYPE_ID'];
 
         return parent::onPrepareComponentParams($arParams);
     }
@@ -180,7 +181,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
                     'DISCOUNT_PRICE' => $items->getDiscountPrice(), // величина скидки
                     //'CUSTOMP_RICE' => $items->isCustomPrice(), // цена указана вручную (без использования провайдера)
                     //'AVAILABLE_FIELDS' => $items->getAvailableFields(), //  массив кодов всех полей
-                    'PROPS' => $this->getProductDataList($items->getProductId()),
+                    'PROPS' => $this->getProductDataList($this->arParams['IBLOCK_TYPE_ID'], $items->getProductId()),
                 ];
             }
             $this->arResult['PRODUCT_LIST'] = $arr;
@@ -334,15 +335,15 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * @param integer $id - товара з корзини
      * @return array - масив з інформацією по товарy в кошику
      */
-    public function getProductDataList($id)
+    public function getProductDataList($iblock_id, $id)
     {
         // перевіряємо 'товар' чи 'торгова пропозиція' (false - в случае ошибки;)
         $productSku =  CCatalogSku::GetProductInfo($id); // Метод позволяет получить по ID торгового предложения ID товара.
 
         if(is_array($productSku)) // торгова пропозиція, беремо ІД товара по торговій пропозиції
-            $products = $this->makeProductDetailInfo($productSku['ID'], $productSku);
+            $products = $this->makeProductDetailInfo($iblock_id, $productSku['ID'], $productSku);
         else // товар
-            $products = $this->makeProductDetailInfo($id);
+            $products = $this->makeProductDetailInfo($iblock_id, $id);
 
         return $products;
     }
@@ -353,10 +354,23 @@ Class CArhicodeBasketSale extends CBitrixComponent
      * @param bool $sku - масив з торговою пропозицією
      * @return array
      */
-    public function makeProductDetailInfo($id, $sku=false)
+    public function makeProductDetailInfo($iblock_id, $id, $sku=false)
     {
         $arr = [];
         $element = CIBlockElement::GetByID($id)->GetNext();
+
+        $props = [];
+        $res = CIBlockElement::GetProperty($iblock_id, $id, array("sort" => "asc"), Array()); // 'свойства' елемента
+        while ($ob = $res->GetNext())
+        {
+            if ($ob['CODE'] == 'min_count_4_order')
+            {
+                $props['min_count_4_order'] = $ob['VALUE'];
+                break;
+            }
+        }
+        unset($res, $ob);
+
         if(is_array($element))
         {
             $arr = [
@@ -377,6 +391,7 @@ Class CArhicodeBasketSale extends CBitrixComponent
                 'IBLOCK_NAME'=>$element['IBLOCK_NAME'],
                 'DETAIL_PAGE_URL'=>$element['DETAIL_PAGE_URL'],
                 'DETAIL_PAGE_URL'=>$element['DETAIL_PAGE_URL'],
+                'ITEMS_PROPS'=>$props,
             ];
         }
         if($sku) $arr['SKU'] = $sku;
@@ -669,63 +684,8 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
         $address = trim($this->request->get('userAddress'));
 
-        if(!$USER->IsAuthorized())
-        {
-            Debug::writeToFile(['N'=>1],'makeCurrentOrderAction','/test/log.txt');
-
-            if($email != '' || $phone != '')
-            {
-                if(filter_var($email, FILTER_VALIDATE_EMAIL) !== false) $userEmail = $email;
-                else $userEmail = false;
-
-                if(strlen($phone) == 10 && is_int(intval($phone))) $userPhone = $phone;
-                else $userPhone = false;
-            }
-
-            if(!$userEmail && !$userPhone)
-            {
-                $ajaxData['ERROR'] = 'Invalid Email or Phone';
-                $this->sendAjaxAnswer($ajaxData);
-            }
-
-            $userLogin = '';
-            if ($userEmail)
-            {
-                $userLogin = $userEmail;
-                $userPhone = '';
-            }
-            elseif ($userPhone)
-            {
-                $userLogin = 'USER_'.$userPhone;
-                $userEmail = 'USER_'.$userPhone.'@email.ssk';
-            }
-
-            if( strlen($name) < 3) $name = $userEmail;
-
-            $user = new CUser;
-            $arFields = Array(
-                "NAME"              => $name,
-                "LAST_NAME"         => "",
-                "EMAIL"             => $userEmail,
-                "LOGIN"             => $userLogin,
-                "LID"               => 'ru',
-                "ACTIVE"            => "Y",
-                "GROUP_ID"          => array(2,3,5),
-                "PASSWORD"          => "123456",
-                "CONFIRM_PASSWORD"  => "123456",
-                'PERSONAL_PHONE'    => $userPhone,
-            );
-
-            $userID = $user->Add($arFields);
-        }
-
-        if($userID) $this->userId = $userID;
-
-
-        Debug::writeToFile(['N'=>2, 'ID'=>$userID, 'data'=>$arFields],'makeCurrentOrderAction','/test/log.txt');
-        //return;
-
-
+        //
+        $this->userId = $this->verifyUserIsRegistered($email, $phone);
 
         // Кошик
         $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
@@ -759,13 +719,15 @@ Class CArhicodeBasketSale extends CBitrixComponent
         $payment->setField("SUM", $this->order->getPrice());
         $payment->setField("CURRENCY", $this->order->getCurrency());
 
+
+        $this->saveProfileData($this->order);
+
+
         $result = $this->order->save();
-
-        Debug::writeToFile(['N'=>3, 'R'=>$result->isSuccess(),],'makeCurrentOrderAction','/test/log.txt');
-
         if ($result->isSuccess())
         {
             $ajaxData['ORDER_ID'] =  $this->order->getId();
+            $ajaxData['PAY_SYSTEM_ID'] =  $paySystemId;
             $ajaxData['ERROR'] = 'N';
             $this->showOrderAction($ajaxData);
         }
@@ -863,6 +825,197 @@ Class CArhicodeBasketSale extends CBitrixComponent
 
 
     /* METHOD ------------------------------------------------------------------------------------------------------- */
+
+    /**
+     * Зберігаємо профіль користувача
+     */
+    protected function saveProfileData($order)
+    {
+        $arResult = $this->arResult;
+        $profileId = 0;
+        $profileName = '';
+        $properties = array();
+
+        if (isset($arResult['ORDER_PROP']) && is_array($arResult['ORDER_PROP']['USER_PROFILES']))
+        {
+            foreach ($arResult['ORDER_PROP']['USER_PROFILES'] as $profile)
+            {
+                if ($profile['CHECKED'] === 'Y')
+                {
+                    $profileId = (int)$profile['ID'];
+                    break;
+                }
+            }
+        }
+
+        $propertyCollection = $order->getPropertyCollection();
+        if (!empty($propertyCollection))
+        {
+            if ($profileProp = $propertyCollection->getProfileName())
+                $profileName = $profileProp->getValue();
+
+            /** @var Sale\PropertyValue $property */
+            foreach ($propertyCollection as $property)
+            {
+                $properties[$property->getField('ORDER_PROPS_ID')] = $property->getValue();
+            }
+        }
+
+        $arFields = array(
+            "NAME" => "Профиль 001",
+            "USER_ID" => $this->userId,
+            "PERSON_TYPE_ID" => 1
+        );
+        $USER_PROPS_ID = CSaleOrderUserProps::Add($arFields);
+
+        Debug::writeToFile([$order->getUserId(), $profileId, $profileName, $order->getPersonTypeId(), $properties,],'','/test/log.txt');
+
+
+        CSaleOrderUserProps::DoSaveUserProfile(
+            $order->getUserId(),
+            $profileId,
+            $profileName,
+            $order->getPersonTypeId(),
+            $properties,
+            $arResult["ERROR"]
+        );
+    }
+
+    /**
+     * Initialization of user profiles. Set user profiles data to $this->arResult.
+     */
+    protected function initUserProfiles()
+    {
+        $bFirst = false;
+        $this->arResult['USER_PROFILES'] = [];
+        $dbUserProfiles = CSaleOrderUserProps::GetList(
+            array('DATE_UPDATE' => 'DESC'),
+            array(
+                'PERSON_TYPE_ID' => $this->order->getPersonTypeId(),
+                'USER_ID' => $this->userId
+            )
+        );
+        while ($arUserProfiles = $dbUserProfiles->GetNext())
+        {
+            $this->arResult['USER_PROFILES'][$arUserProfiles['ID']] = $arUserProfiles;
+        }
+    }
+
+
+
+    public function verifyUserIsRegistered($email = '', $phone= '')
+    {
+        global $USER;
+
+
+        $userID = $this->userId;
+
+        if(!$USER->IsAuthorized())
+        {
+
+
+
+            // -------------
+
+
+
+            if($email != '' || $phone != '')
+            {
+                if(filter_var($email, FILTER_VALIDATE_EMAIL) !== false) $userEmail = $email;
+                else $userEmail = false;
+
+                if(strlen($phone) == 10 && is_int(intval($phone))) $userPhone = $phone;
+                else $userPhone = false;
+            }
+
+            if(!$userEmail && !$userPhone)
+            {
+                $ajaxData['ERROR'] = 'Invalid Email or Phone';
+                $this->sendAjaxAnswer($ajaxData);
+            }
+
+            $userLogin = '';
+            if ($userEmail)
+            {
+                $userLogin = $userEmail;
+                $userPhone = '';
+            }
+            elseif ($userPhone)
+            {
+                $userLogin = 'USER_'.$userPhone;
+                $userEmail = 'USER_'.$userPhone.'@email.ssk';
+            }
+
+            if( strlen($name) < 3) $name = $userEmail;
+
+            $user = new CUser;
+            $arFields = Array(
+                "NAME"              => $name,
+                "LAST_NAME"         => "",
+                "EMAIL"             => $userEmail,
+                "LOGIN"             => $userLogin,
+                "LID"               => 'ru',
+                "ACTIVE"            => "Y",
+                "GROUP_ID"          => array(2,3,5),
+                "PASSWORD"          => "123456",
+                "CONFIRM_PASSWORD"  => "123456",
+                'PERSONAL_PHONE'    => $userPhone,
+            );
+
+            $userID = $user->Add($arFields);
+        }
+
+
+
+
+        return $userID;
+    }
+
+    /**
+     * Генеруємо дані для платіжної системи `Platon`
+     * @param $ORDER_ID
+     * @return array
+     */
+    public function getPlatonOrder($ORDER_ID)
+    {
+        $arr = [];
+        $arOrder = Array();
+        $arFilter = Array('ID'=>$ORDER_ID, 'USER_ID'=>$this->userId, 'PAYED'=>'N', '!STATUS_ID'=>array('P','F','E'));
+        $db_order = CSaleOrder::GetList($arOrder, $arFilter, false, false, Array());
+        while ($dbo = $db_order->Fetch())
+        {
+            $pass = 'jXSbAu6nBqDyKpeAejMDHthvHJ6Q17Dv';
+            $arr['key'] = 'YPKRRKZXZX';
+            $arr['url'] = 'https://ssk-market.com.ua/personal/order/payment/result.php';
+            $arr['data'] = base64_encode(serialize(array(
+                'amount' => number_format(floatval($dbo['PRICE']), 2, '.', ''),
+                'currency' => $dbo['CURRENCY'],
+                'name' => 'Buying '.$dbo['USER_ID'].'/'.$dbo['ID'],
+                'recurring' => 'init'
+            )));
+            $ip_server = COption::GetOptionString('platon.paysystem', "PLATON_IP_SERVER")!=='CHANGE_IP' ? strrev($_SERVER["REMOTE_ADDR"]) : trim(COption::GetOptionString('platon.paysystem', "PLATON_CHANGE_IP_SERVER"));
+            $arr['ip'] = $ip_server;
+            $arr['sign'] = md5(strtoupper(
+                $ip_server.
+                strrev($arr['key']).
+                strrev($arr['data']).
+                strrev($arr['url']).
+                strrev($pass)
+            ));
+            $arr['last_name'] = $dbo['USER_LAST_NAME'];
+            $arr['first_name'] = $dbo['USER_NAME'];
+            $arr['email'] = $dbo['USER_EMAIL'];
+            $arr['order'] = $dbo['ID'];
+            $arr['amount'] = $dbo['PRICE'].' '.$dbo['CURRENCY'];
+
+            $db_sales_ord = CSaleOrderPropsValue::GetList(array(), Array("ORDER_ID" => $dbo['ID']));
+            while ($ar_sale_ord = $db_sales_ord->Fetch())
+                if ($ar_sale_ord['CODE'] == 'PHONE')
+                    $arr['phone'] = $ar_sale_ord['VALUE'];
+            print_r($arr);
+        }
+        return $arr;
+    }
 
     /**
      * V1.
@@ -1014,6 +1167,11 @@ Class CArhicodeBasketSale extends CBitrixComponent
     public function showOrderAction($ajaxData)
     {
         $user = CSaleOrder::GetByID($ajaxData['ORDER_ID']);
+
+        $this->arParams['PAY_SYSTEM_ID'] = 9; // TODO - доробити вибір платіжної системи
+        if($ajaxData['PAY_SYSTEM_ID'] == $this->arParams['PAY_SYSTEM_ID'])
+            $ajaxData['PLATON'] = $this->getPlatonOrder($ajaxData['ORDER_ID']);
+
         $ajaxData['ORDER'] = [
             'PRICE'=>$user['PRICE'],
         ];
