@@ -2131,19 +2131,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		showAll: function() // розкриваємо всі блоки
 		{
 			var masId = [
-				'bx-soa-basket', 	// для коректної роботи закоментувати перший або останній
+				'bx-soa-basket', 	// для коректної роботи закоментувати або ні подивитися в процесі
 				'bx-soa-region',
 				'bx-soa-paysystem',
 				'bx-soa-delivery',
 				'bx-soa-pickup',
 				'bx-soa-properties'
-                //'bx-soa-basket',	//
 			];
-            for (var i=0; i < masId.length-1; i++ ) // (masId.length -1) віднімаємо 1 - протестувати чи треба
+            for (var i=0; i < masId.length-1; i++ ) // (masId.length -1) віднімаємо (bx-soa-properties) 1 - протестувати чи треба
             {
                 console.log(masId[i]);
                 this.show(BX(masId[i]));
             }
+
+            // TODO 4. якщо не працює то забераємо з масиву 'bx-soa-properties' (або віднімаємо -1) і активним ставимо цей блок:
+            // this.activeSectionId = 'bx-soa-properties';
+
 		},
 
 		showByClick: function(event)
