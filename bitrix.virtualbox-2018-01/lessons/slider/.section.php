@@ -1,6 +1,0 @@
-<?
-$sSectionName = "Слайдер";
-$arDirProperties = Array(
-
-);
-?>
